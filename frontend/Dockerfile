@@ -22,18 +22,18 @@ WORKDIR /workspace/frontend
 # ========================================
 FROM base AS dev
 
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+#CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 
 # ========================================
 # Builder Stage
 # ========================================
 FROM base AS builder
 
-COPY frontend/package*.json ./
-RUN npm install
+#COPY frontend/package*.json ./
+#RUN npm install
 
-COPY frontend ./
-RUN npm run build
+#COPY frontend ./
+#RUN npm run build
 
 # ========================================
 # Prod Stage

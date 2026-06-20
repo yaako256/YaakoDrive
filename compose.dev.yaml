@@ -88,20 +88,23 @@ services:
     working_dir: /workspace/frontend
     tty: true
 
+    #command:
+    #  - npm
+    #  - run
+    # - dev
+    #  - --
+    #  - --host
+    #  - 0.0.0.0
     command:
-      - npm
-      - run
-      - dev
-      - --
-      - --host
-      - 0.0.0.0
+      - sleep
+      - infinity
 
     environment:
       VITE_API_BASE_URL: http://localhost:8080
 
     volumes:
       - .:/workspace
-      - frontend_node_modules:/workspace/frontend/node_modules
+    #      - frontend_node_modules:/workspace/frontend/node_modules
 
     ports:
       - "5173:5173"

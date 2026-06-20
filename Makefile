@@ -34,7 +34,7 @@ DATABASE_SERVICE_NAME := db
 ### Docker関連(Docker Management)
 # ==================================
 # ---- 開発用コンテナ ----
-.PHONY: dev-up dev-stop dev-down dev-build dev-logs 
+.PHONY: dev-up dev-stop dev-down dev-build dev-logs dev-ps
 
 ## 開発用コンテナを起動
 dev-up:
@@ -55,6 +55,10 @@ dev-build:
 ## 開発用コンテナのログ
 dev-logs:
 	$(COMPOSE_DEV) logs -f
+
+## 開発用コンテナのログ
+dev-ps:
+	$(COMPOSE_DEV) ps
 
 .PHONY: backend-shell frontend-shell
 
@@ -100,3 +104,13 @@ migrate:
 #	$(COMPOSE_DEV) down
 #	$(COMPOSE_DEV) rm
 #	$(COMPOSE_PROD) up -d --build --force-recreate
+
+
+# ==================================
+### その他 (Utilities)
+# ==================================
+.PHONY: chown
+
+## カレントディレクトリ内の全ファイルに権限の付与
+chown:
+	sudo chown -R $(shell whoami):$(shell whoami) .

@@ -58,10 +58,14 @@ eee = { workspace = true }
 # 固有クレート
 fff = "0.8"
 ```
+# 例: Viteで「frontend」というディレクトリにプロジェクトを展開する場合
 
 
 
 # フロントエンド側(React)
+ホスト側にはnpmが入っていない。  
+そのため、頑張って一旦Dockerを立ち上げたうえで、コンテナ内で以下を行う。  
+Dockerfileやcompose.yamlの`npm run`みたいなやつを全部消せは立ち上げるはずである。  
 1. ルートディレクトリを作成する  
 ```bash
 mkdir frontend
