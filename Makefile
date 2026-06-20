@@ -44,7 +44,12 @@ check:
 ### Docker関連(Docker Management)
 # ==================================
 # ---- 開発用コンテナ ----
-.PHONY: dev-up dev-stop dev-down dev-build dev-logs dev-ps
+.PHONY: env dev-up dev-stop dev-down dev-build dev-logs dev-ps
+
+## envファイル再読み込み用
+# 実態はただのup
+env:
+	$(COMPOSE_DEV) up -d --force-recreate
 
 ## 開発用コンテナを起動(buildでDockerfileの再読み込みもする)
 dev-up:
