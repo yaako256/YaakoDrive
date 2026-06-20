@@ -20,7 +20,7 @@ use crate::error::ConfigResult;
 pub fn load() -> ConfigResult<AppConfig> {
   // .env を読む
   // 読み込み失敗はエラー(env上書き必須のものがあるため)
-  dotenvy::dotenv()?;
+  //dotenvy::dotenv()?;
 
   // 環境変数から環境ラベルを読み込む
   let env = std::env::var("APP_ENV")?;
@@ -28,17 +28,17 @@ pub fn load() -> ConfigResult<AppConfig> {
   // 設定ファイルをロードする
   let settings = Config::builder()
     // 基本設定の読み込み(TOML)
-    .add_source(File::with_name(".config/config.toml").required(false))
+    .add_source(File::with_name("../.config/config.default.toml").required(true))
     // 環境ラベル別上書き設定の読み込み(TOML)
-    .add_source(File::with_name(&format!(".config/{env}.toml")).required(false))
+    .add_source(File::with_name(&format!("../.config/config.{env}.toml")).required(true))
     // 2. ENV上書き（APP__AAAAA__BBBB_BBB_BBBB形式）
-    .add_source(
-      Environment::with_prefix("APP")
-        .separator("__")
-        .try_parsing(true)
-        .list_separator(","),
-    )
+    .add_source(Environment::with_prefix("APP").separator("__"))
     .build()?;
+
+  println!(
+    "jwt.access_token_expires_secs = {:?}",
+    settings.get::<u64>("jwt.access_token_expires_secs")
+  );
 
   // AppConfigにデシリアライズ
   let config = settings.try_deserialize::<AppConfig>()?;

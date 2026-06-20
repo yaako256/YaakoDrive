@@ -45,12 +45,15 @@ services:
     # 環境変数の設定
     environment:
       # 実行環境ラベル(上書きconfigファイルの指定に使用)
-      APP__ENV: dev
-      #RUST_LOG: yaakodrive=debug,tower_http=debug
+      APP_ENV: dev
 
     volumes:
       # リポジトリ全体を見られるようにする。
       - .:/workspace
+
+      # 設定ファイルをvolumeにマウント(読み取り専用)
+      - ./.config/config.default.toml:/workspace/.config/config.default.toml:ro
+      - ./.config/config.dev.toml:/workspace/.config/config.dev.toml:ro
 
       # Rustの依存キャッシュ。毎回ダウンロードし直さないための名前付きvolume。
       - cargo_registry:/usr/local/cargo/registry
@@ -58,9 +61,8 @@ services:
 
       # targetは容量が大きいため名前付きvolumeに逃がす。
       - backend_target:/workspace/backend/target
-
       # 開発用アップロードファイル置き場。
-      - ./data/dev:/workspace/data/dev
+      #- ./data/dev:/workspace/data/dev
 
     ports:
       - "8080:8080"

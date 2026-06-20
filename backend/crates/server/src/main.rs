@@ -38,7 +38,7 @@ async fn main() -> ServerResult<()> {
   // サーバ起動処理
   if let Err(e) = run().await {
     // 成形済エラー出力
-    eprintln!("{}", e);
+    eprintln!("[server] {}\n", e);
     // エラー終了
     return Err(e);
   }
@@ -48,8 +48,8 @@ async fn main() -> ServerResult<()> {
 
 /// サーバの起動処理
 ///
-/// main() はエラー発生時に整形済みメッセージを出力してから
-/// 元のエラーを返したいため、実際の起動処理はこの関数に分離する。
+/// main() で整形済みエラーメッセージを出力した後に
+/// エラーを再伝搬させるため、実処理をこの関数に分離している。
 async fn run() -> ServerResult<()> {
   // config読み込み（失敗したら即終了）
   let config = config::load()?;

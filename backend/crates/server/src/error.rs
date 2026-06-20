@@ -13,12 +13,12 @@ use config;
 /// Configクレートのエラー型
 #[derive(Debug, Error)]
 pub enum ServerError {
-  #[error("[Configエラー]: {0}")]
+  #[error("[config] {0}")]
   Config(#[from] config::ConfigError),
 
   // axumは標準のstd::ioのエラー
   // axum以外でこのエラーが出ないため、そのまま使う
-  #[error("[Configエラー]: {0}")]
+  #[error("axumエラー: {0}")]
   Axum(#[from] std::io::Error),
 }
 

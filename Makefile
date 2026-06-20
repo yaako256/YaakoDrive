@@ -27,11 +27,15 @@ DATABASE_SERVICE_NAME := db
 # ==================================
 ### 実行関連(Execution)
 # ==================================
-.PHONY: check
+.PHONY: check run-server check
+
+# サーバ起動(開発用)
+run-server:
+	$(COMPOSE_DEV) exec $(BACKEND_SERVICE_NAME) cargo run -p server
 
 # バックエンドのCargo check
 check:
-	$(COMPOSE_DEV) exec backend cargo check
+	$(COMPOSE_DEV) exec $(BACKEND_SERVICE_NAME) cargo check
 
 
 
@@ -85,7 +89,7 @@ backend-test:
 	$(COMPOSE_DEV) exec $(BACKEND_SERVICE_NAME) cargo test
 
 migrate:
-	$(COMPOSE_DEV) exec backend sqlx migrate run
+	$(COMPOSE_DEV) exec $(BACKEND_SERVICE_NAME) sqlx migrate run
 
 
 # ---- 本番用コンテナ ----
