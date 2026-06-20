@@ -205,7 +205,6 @@ pub struct RefreshToken {
     pub expires_at: DateTime<Utc>,
     pub created_at: DateTime<Utc>,
     pub revoked_at: Option<DateTime<Utc>>,
-    pub user_agent: Option<String>,
 }
 ```
 
@@ -699,3 +698,57 @@ UNIQUE(stored_filename)
 ```sql
 UNIQUE(token_hash)
 ```
+
+
+---
+# 認証フロー設計
+
+## トークンの保存場所
+Access Token・Refresh Token ともに HttpOnly Cookie で管理する。
+JavaScriptからは読めないため、XSS経由のトークン盗難を防ぐ。
+
+## 有効期限
+有効期限は config から読み込む。以下は参考値。
+
+| トークン | 参考値 |
+|----------|--------|
+| Access Token | 15分 |
+| Refresh Token | 30日 |
+
+## Cookie設定
+
+| 属性 | 値 | 理由 |
+|------|----|------|
+| HttpOnly | true | JS から読めなくする |
+| Secure | true | HTTPS のみ送信 |
+| SameSite | Strict | CSRF対策 |
+| Path(Access Token) | `/api` | 通常のAPIリクエスト全体に載せる |
+| Path(Refresh Token) | `/api/auth/refresh` | リフレッシュ専用エンドポイントにのみ送信する |
+
+Refresh Token の Path を `/api/auth/refresh` に絞ることで、
+アップロードや一覧取得などの通常リクエストにRefresh Tokenが載らなくなる。
+万が一の漏洩リスクを最小化するための設計。
+
+## トークン再発行の流れ
+Access Token が切れた場合、フロントエンドは 401 を受け取ったタイミングで
+`POST /api/auth/refresh` を呼び、新しい Access Token を取得する。
+フロントエンドはトークンの中身を意識せず、Cookie は自動送信される。
+
+```text
+通常リクエスト → 401 Unauthorized
+ ↓
+POST /api/auth/refresh  (Refresh Token Cookie が自動送信される)
+ ↓
+RefreshTokenUseCase
+ ↓
+Refresh Token 検証 (有効期限・revoked_at・user_agent)
+ ↓
+新しい Access Token を Cookie にセット
+ ↓
+元のリクエストをリトライ
+```
+
+## User-Agentの記録
+ログイン時に HTTP ヘッダーの `User-Agent` を取得し、
+`refresh_tokens` テーブルの `user_agent` カラムに保存する。
+Dashboard のセッション一覧などで端末情報として表示することを想定している。
