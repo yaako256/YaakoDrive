@@ -1,3 +1,9 @@
 # .config/config.dev.toml
 # 開発用の上書き設定ファイル
 
+# クッキー認証の設定
+[cookie]
+# クッキー認証をするかどうか
+# [開発環境] クッキーがないのでfalse
+# [本番環境] クッキー認証をするのでtrue
+secure = false
