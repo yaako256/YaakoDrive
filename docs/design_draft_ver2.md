@@ -752,3 +752,163 @@ Refresh Token 検証 (有効期限・revoked_at・user_agent)
 ログイン時に HTTP ヘッダーの `User-Agent` を取得し、
 `refresh_tokens` テーブルの `user_agent` カラムに保存する。
 Dashboard のセッション一覧などで端末情報として表示することを想定している。
+
+
+---
+# APIレスポンス設計
+
+## エンベロープ形式
+全レスポンスを `data` / `error` でラップする形式を採用する。
+フロントエンドは `response.error` を見るだけで成功・失敗を判定できる。
+
+```json
+// 成功時
+{ "data": { ... }, "error": null }
+
+// 失敗時
+{ "data": null, "error": { "code": "not_found", "message": "指定されたノードが存在しません" } }
+```
+
+Rust側の型イメージ:
+```rust
+#[derive(Serialize)]
+pub struct ApiResponse<T: Serialize> {
+    pub data: Option<T>,
+    pub error: Option<ApiError>,
+}
+
+#[derive(Serialize)]
+pub struct ApiError {
+    pub code: String,
+    pub message: String,
+}
+```
+
+## エラーコード一覧
+| code | HTTPステータス | 意味 |
+|------|---------------|------|
+| `unauthorized` | 401 | 未認証 |
+| `forbidden` | 403 | 権限不足 |
+| `not_found` | 404 | リソースが存在しない |
+| `already_exists` | 409 | 同名ファイル・フォルダの重複 |
+| `storage_limit_exceeded` | 409 | ストレージ上限超過 |
+| `invalid_request` | 422 | リクエスト内容が不正 |
+| `internal_error` | 500 | サーバ内部エラー |
+
+## エンドポイント一覧
+
+### 認証
+| メソッド | パス | 説明 |
+|---------|------|------|
+| POST | `/api/auth/login` | ログイン。Access Token・Refresh Token を Cookie にセット |
+| POST | `/api/auth/refresh` | Access Token 再発行 |
+| POST | `/api/auth/logout` | ログアウト。Cookie を削除し Refresh Token を revoke |
+
+### ノード(ファイル・フォルダ共通)
+| メソッド | パス | 説明 |
+|---------|------|------|
+| GET | `/api/nodes` | ルート直下の一覧取得 |
+| GET | `/api/nodes/{id}/children` | 指定フォルダの直下一覧取得 |
+| GET | `/api/nodes/{id}` | ノード情報取得 |
+| PATCH | `/api/nodes/{id}/rename` | リネーム |
+| PATCH | `/api/nodes/{id}/move` | 移動 |
+| DELETE | `/api/nodes/{id}` | ゴミ箱へ移動(論理削除) |
+
+### ファイル
+| メソッド | パス | 説明 |
+|---------|------|------|
+| POST | `/api/nodes/{id}/upload` | 指定フォルダへファイルアップロード |
+| GET | `/api/nodes/{id}/download-url` | 一時ダウンロードURL発行 |
+| GET | `/api/files/download/{token}` | 実ファイル取得(JWT不要・トークン認証) |
+
+### フォルダ
+| メソッド | パス | 説明 |
+|---------|------|------|
+| POST | `/api/nodes/{id}/folders` | 指定フォルダ配下にフォルダ作成 |
+
+### ゴミ箱
+| メソッド | パス | 説明 |
+|---------|------|------|
+| GET | `/api/trash` | ゴミ箱一覧取得 |
+| POST | `/api/trash/{id}/restore` | ゴミ箱から復元 |
+| DELETE | `/api/trash/{id}` | 物理削除 |
+
+### 検索
+| メソッド | パス | 説明 |
+|---------|------|------|
+| GET | `/api/search?q={keyword}` | ファイル・フォルダ名検索 |
+
+### Dashboard
+| メソッド | パス | 説明 |
+|---------|------|------|
+| GET | `/api/dashboard` | 使用容量・ファイル数などの統計情報取得 |
+
+### ユーザ管理(管理者のみ)
+| メソッド | パス | 説明 |
+|---------|------|------|
+| GET | `/api/admin/users` | ユーザ一覧取得 |
+| POST | `/api/admin/users` | ユーザ作成 |
+| PATCH | `/api/admin/users/{id}` | ユーザ情報変更(ストレージ上限・停止など) |
+
+## レスポンス例
+
+### GET /api/nodes/{id}/children
+フォルダとファイルを混在して返す。フロントが `node_type` で振り分ける。
+フォルダを上に表示するようなソートもフロント側で行う。
+
+```json
+{
+  "data": {
+    "nodes": [
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "name": "写真",
+        "node_type": "folder",
+        "parent_id": "550e8400-e29b-41d4-a716-446655440001",
+        "deleted_at": null,
+        "created_at": "2025-01-01T00:00:00Z",
+        "updated_at": "2025-01-01T00:00:00Z"
+      },
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440002",
+        "name": "memo.txt",
+        "node_type": "file",
+        "parent_id": "550e8400-e29b-41d4-a716-446655440001",
+        "deleted_at": null,
+        "created_at": "2025-01-01T00:00:00Z",
+        "updated_at": "2025-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "error": null
+}
+```
+
+### GET /api/nodes/{id}/download-url
+一時ダウンロードURLを発行する。トークンはサーバのメモリ(HashMap)で管理する。
+有効期限は短命(参考値: 5分)とし、1回使い切りとする。
+将来的にはDBでの管理に拡張することを検討する。
+
+```json
+{
+  "data": {
+    "url": "/api/files/download/a3f8c2d1b9e1f4a2"
+  },
+  "error": null
+}
+```
+
+### POST /api/auth/login
+レスポンスボディには最低限の情報のみ返す。
+トークンはCookieにセットするためボディには含めない。
+
+```json
+{
+  "data": {
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "username": "yaako",
+    "role": "admin"
+  },
+  "error": null
+}
+```
