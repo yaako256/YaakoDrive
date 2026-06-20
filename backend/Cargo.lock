@@ -745,6 +745,12 @@ dependencies = [
 [[package]]
 name = "node"
 version = "0.1.0"
+dependencies = [
+ "chrono",
+ "identity",
+ "serde",
+ "thiserror",
+]
 
 [[package]]
 name = "nom"
