@@ -20,11 +20,12 @@ use config;
 // api用
 use api;
 
-#[tokio::main]
-async fn main() {
-  // config読み込み（失敗したら即終了）
-  let config = config::load().expect("Failed to load config");
+// 自クレート
+mod error;
+use error::ServerResult;
 
+#[tokio::main]
+async fn main() -> ServerResult<()> {
   // tracing初期化
   // ログレベルは環境変数(RUST_LOG)で設定できる
   tracing_subscriber::registry()
@@ -33,6 +34,25 @@ async fn main() {
     // 画面出力の設定
     .with(tracing_subscriber::fmt::layer())
     .init();
+
+  // サーバ起動処理
+  if let Err(e) = run().await {
+    // 成形済エラー出力
+    eprintln!("{}", e);
+    // エラー終了
+    return Err(e);
+  }
+
+  Ok(())
+}
+
+/// サーバの起動処理
+///
+/// main() はエラー発生時に整形済みメッセージを出力してから
+/// 元のエラーを返したいため、実際の起動処理はこの関数に分離する。
+async fn run() -> ServerResult<()> {
+  // config読み込み（失敗したら即終了）
+  let config = config::load()?;
 
   info!("Starting YaakoDrive server");
   info!("Listening on {}:{}", config.server.host, config.server.port);
@@ -44,10 +64,10 @@ async fn main() {
   let addr = format!("{}:{}", config.server.host, config.server.port);
 
   // 指定したアドレスでTCPリスナー(通信窓口)をバインド
-  let listener = tokio::net::TcpListener::bind(&addr)
-    .await
-    .expect("Failed to bind");
+  let listener = tokio::net::TcpListener::bind(&addr).await?;
 
   // Axumサーバーを起動してリクエストの待機を開始
-  axum::serve(listener, router).await.expect("Server error");
+  axum::serve(listener, router).await?;
+
+  Ok(())
 }

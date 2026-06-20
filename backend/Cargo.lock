@@ -855,6 +855,7 @@ dependencies = [
  "api",
  "axum",
  "config 0.1.0",
+ "thiserror",
  "tokio",
  "tracing",
  "tracing-subscriber",
