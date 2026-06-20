@@ -4,3 +4,23 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+# workspace内の別クレート
+identity = { path = "../identity" }
+
+# workspace共通外部クレート
+thiserror = { workspace = true }
+serde = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+
+
+
+# 固有クレート
+# JWT用
+jsonwebtoken = "9"
+# ハッシュ化用
+argon2 = "0.5"
+# 乱数生成用
+rand = "0.8"
+# わからん
+hex = "0.4"

@@ -19,3 +19,9 @@ axum = "0.8"
 
 # 非同期処理/低レイヤー通信
 tokio = { version = "1", features = ["full"] }
+
+# UUID用
+uuid = { version = "1", features = ["v4", "serde"] }
+
+# 時間型用
+chrono = { version = "0.4", features = ["serde"] }

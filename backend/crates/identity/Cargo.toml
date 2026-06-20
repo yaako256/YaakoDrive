@@ -6,7 +6,4 @@ edition = "2024"
 [dependencies]
 # workspace共通外部クレート
 serde = { workspace = true }
-
-# 固有クレート
-# UUID用
-uuid = { version = "1", features = ["v4", "serde"] }
+uuid = { workspace = true }
