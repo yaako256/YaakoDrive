@@ -7,7 +7,10 @@
 - configクレート作成
 - serverのエントリポイント作成
 - apiのヘルスチェック部分作成
+- 各SQLファイルの作成
+- makefileを使った、ホストからバックエンド経由でのSQL操作の確認
 
 warkspace周りの作成をした。
 serverの起動や、別ターミナルでの`curl -s http://localhost:8080/api/health | jq`確認をした。
-つまり、実装順序ののPhase1と2が完成した。
+SQL関連を確認した。
+つまり、実装順序ののPhase1と2と3が完成した。

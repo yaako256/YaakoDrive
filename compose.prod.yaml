@@ -17,13 +17,12 @@ name: yaakodrive-prod
 
 services:
   db:
-    #environment:
-    #POSTGRES_USER: yaakodrive
-    #POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
-    #POSTGRES_DB: yaakodrive
-    #TZ: Asia/Tokyo
+    environment:
+      POSTGRES_DB: yaakodrive_prod
+      # POSTGRES_PASSWORDは.env.prodのPOSTGRES_PASSWORDが使われる
 
     volumes:
+      # バックアップ処置などを取るためバインドVolume化
       - /srv/yaakodrive/postgres:/var/lib/postgresql/data
 
   backend:
@@ -42,6 +41,8 @@ services:
     environment:
       # 実行環境ラベル(上書きconfigファイルの指定に使用)
       APP_ENV: prod
+      # 設定ファイルのパス
+      APP_CONFIG_DIR: /app/.config
 
     volumes:
       # 設定ファイル(読み取り専用)

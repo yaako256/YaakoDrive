@@ -25,18 +25,22 @@ services:
     container_name: yaakodrive_db
     restart: unless-stopped
 
-    #environment:
-    #  POSTGRES_USER: yaakodrive
-    #  POSTGRES_PASSWORD: yaakodrive
-    #  POSTGRES_DB: yaakodrive
-    #  TZ: Asia/Tokyo
+    environment:
+      POSTGRES_USER: yaakodrive
 
-    # 本番ではcompose.prod.yaml側でホストパスへ差し替える。
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # POSTGRESパスワードは.env指定
+      # 初期値は記入せず、dev/prodで上書きする
+      # → それにしようと思ったが、.env上書きよりenvironmentが強かったため、コメントアウト
+      #POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+
+      # DB名は後でdev/prodで上書きする
+      # このデフォルト値では起動しない想定
+      POSTGRES_DB: yaakodrive
+
+      TZ: Asia/Tokyo
 
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U yaakodrive -d yaakodrive" ]
+      test: [ "CMD-SHELL", "pg_isready -U yaakodrive" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -46,6 +50,3 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-
-volumes:
-  postgres_data:
