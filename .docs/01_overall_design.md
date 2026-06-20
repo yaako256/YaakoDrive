@@ -142,9 +142,9 @@ commit
 - 復元後にDBと実ファイルの整合性チェックを行う
 
 ## 設計書一覧
-- `01_overall_design.md`: 全体設計
-- `02_backend_design.md`: Rustバックエンド設計
-- `03_frontend_design.md`: Reactフロントエンド設計
-- `04_api_design.md`: API設計
-- `05_db_design.md`: DB設計
-- `06_operations_design.md`: CLI/運用設計
+- [`01_overall_design.md`](./01_overall_design.md): 全体設計
+- [`02_backend_design.md`](./02_backend_design): Rustバックエンド設計
+- [`03_frontend_design.md`](./03_frontend_design.md): Reactフロントエンド設計
+- [`04_api_design.md`](./04_api_design.md): API設計
+- [`05_db_design.md`](./05_db_design.md): DB設計
+- [`06_operations_design.md`](./06_operations_design.md): CLI/運用設計
