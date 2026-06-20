@@ -5,8 +5,6 @@ configをapp.tomlや.envからloadする関数の定義
 */
 
 // 外部クレート
-// envファイル読み込み用
-use dotenvy;
 // config用
 use config::{Config, Environment, File};
 
@@ -18,10 +16,6 @@ use crate::error::ConfigResult;
 
 /// configを設定ファイルからロードする
 pub fn load() -> ConfigResult<AppConfig> {
-  // .env を読む
-  // 読み込み失敗はエラー(env上書き必須のものがあるため)
-  //dotenvy::dotenv()?;
-
   // 環境変数から環境ラベルを読み込む
   let env = std::env::var("APP_ENV")?;
 
@@ -34,11 +28,6 @@ pub fn load() -> ConfigResult<AppConfig> {
     // 2. ENV上書き（APP__AAAAA__BBBB_BBB_BBBB形式）
     .add_source(Environment::with_prefix("APP").separator("__"))
     .build()?;
-
-  println!(
-    "jwt.access_token_expires_secs = {:?}",
-    settings.get::<u64>("jwt.access_token_expires_secs")
-  );
 
   // AppConfigにデシリアライズ
   let config = settings.try_deserialize::<AppConfig>()?;

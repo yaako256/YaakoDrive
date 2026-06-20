@@ -23,4 +23,4 @@ pub enum ServerError {
 }
 
 /// Configクレートのリザルト
-pub type ServerResult<T> = Result<T, ServerError>;
+pub(crate) type ServerResult<T> = Result<T, ServerError>;

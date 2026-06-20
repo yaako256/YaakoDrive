@@ -1,5 +1,4 @@
 # toDoメモ
-- ConfigResultをpub(crate)にする。
 
 
 
