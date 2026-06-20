@@ -23,6 +23,9 @@ name: yaakodrive-dev
 
 services:
   db:
+    # envファイルの指定
+    env_file: .config/.env.dev
+
     environment:
       POSTGRES_DB: yaakodrive_dev # ← dev用DB名に上書き
     # POSTGRES_PASSWORDは.env.devのPOSTGRES_PASSWORDが使われる
