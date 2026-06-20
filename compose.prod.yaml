@@ -1,0 +1,90 @@
+﻿# compose.prod.yaml
+# ========================================
+# YaakoDrive 本番用Compose定義
+# ========================================
+#
+# 本番はTailscale内での運用を想定する。
+# ただし、将来的なインターネット公開も見据えて、設定・永続化・ログを分ける。
+#
+# 起動:
+#   docker compose -f compose.yaml -f compose.prod.yaml up -d
+#
+# 注意:
+# - 本番ではPOSTGRES_PASSWORDやAPP__JWT__SECRETを必ず変更する
+# - /srv/yaakodrive/... は自宅サーバ側のパスに合わせて調整する
+
+name: yaakodrive-prod
+
+services:
+  db:
+    environment:
+      #POSTGRES_USER: yaakodrive
+      #POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      #POSTGRES_DB: yaakodrive
+      TZ: Asia/Tokyo
+
+    volumes:
+      - /srv/yaakodrive/postgres:/var/lib/postgresql/data
+
+  backend:
+    container_name: yaakodrive_backend
+    restart: unless-stopped
+
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: prod
+
+    #environment: 
+    #      APP__ENV: production
+    #      APP__DATABASE__URL: postgres://yaakodrive:${POSTGRES_PASSWORD}@db:5432/yaakodrive
+    #      APP__JWT__SECRET: ${APP__JWT__SECRET:?set APP__JWT__SECRET}
+    #      APP__SERVER__HOST: 0.0.0.0
+    #      APP__SERVER__PORT: 8080
+    #      APP__COOKIE__SECURE: "true"
+    #      APP__STORAGE__DATA_DIR: /data
+    #      APP__UPLOAD__MAX_SIZE_BYTES: 10485760
+    #      RUST_LOG: yaakodrive=info,tower_http=info
+
+    volumes:
+      # 設定ファイル。秘密情報は環境変数優先。
+      - ./config:/app/config:ro
+
+      # 実ファイル保存先。バックアップ対象。
+      - /srv/yaakodrive/data:/data
+
+    ports:
+      # Tailscale内だけで使う場合でも、まずは明示的に公開して動作確認する。
+      # 必要なら 127.0.0.1:8080:8080 や reverse proxy 構成に変更する。
+      - "8080:8080"
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  frontend:
+    container_name: yaakodrive_frontend
+    restart: unless-stopped
+
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      target: prod
+
+    ports:
+      - "3000:80"
+
+    depends_on:
+      - backend
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
