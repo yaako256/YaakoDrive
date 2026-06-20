@@ -30,13 +30,14 @@ CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 # ========================================
 FROM base AS builder
 
-#COPY frontend/package*.json ./
+COPY frontend/package*.json ./
 
-#RUN npm install
+# builder は lockfile を信用して再現可能ビルドしたいので ci
+RUN npm ci
 
-#COPY frontend ./
+COPY frontend ./
 
-#RUN npm run build
+RUN npm run build
 
 # ========================================
 # Prod Stage

@@ -83,17 +83,22 @@ migrate:
 
 
 # ---- 本番用コンテナ ----
+.PHONY: prod-up prod-down deploy prod-ps
 ## 本番用コンテナ起動
-#prod-up:
-#	$(COMPOSE_PROD) up -d --build
+prod-up:
+	$(COMPOSE_PROD) up -d --build
 
 ## 本番用コンテナを停止
-#prod-down:
-#	$(COMPOSE_PROD) down
+prod-down:
+	$(COMPOSE_PROD) down
 
 ## 本番デプロイ
-#deploy:
-#	$(COMPOSE_PROD) up -d --build --force-recreate
+deploy:
+	$(COMPOSE_PROD) up -d --build --force-recreate
+
+## 本番デプロイ
+prod-ps:
+	$(COMPOSE_PROD) ps
 
 
 ## 完全本番デプロイ

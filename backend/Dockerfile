@@ -49,7 +49,7 @@ CMD ["cargo", "watch", "-x", "check"]
 # cargo-chefを使うと依存crateのビルドキャッシュが効きやすい。
 # まだプロジェクト初期でも、後で効いてくるので最初から入れておく。
 FROM base AS chef
-RUN cargo install cargo-chef
+RUN cargo install cargo-chef --locked
 
 FROM chef AS planner
 COPY backend ./
