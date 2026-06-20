@@ -17,6 +17,7 @@ pub struct AppConfig {
   pub upload: UploadConfig,
 }
 
+/// サーバ関連の設定
 #[derive(Debug, Clone, Deserialize)]
 pub struct ServerConfig {
   // サーバのホストアドレス
@@ -25,14 +26,17 @@ pub struct ServerConfig {
   pub port: u16,
 }
 
+/// DB関連の設定
 #[derive(Debug, Clone, Deserialize)]
 pub struct DatabaseConfig {
   // DatabaseのURL
   pub url: String,
 }
 
+/// Jwt関連の設定
 #[derive(Debug, Clone, Deserialize)]
 pub struct JwtConfig {
+  // JWTの秘密鍵
   pub secret: String,
   // AccessTokenの期限[秒]
   pub access_token_expires_secs: u64,
@@ -40,18 +44,21 @@ pub struct JwtConfig {
   pub refresh_token_expires_secs: u64,
 }
 
+/// クッキー認証の設定
 #[derive(Debug, Clone, Deserialize)]
 pub struct CookieConfig {
   // Cookie認証をするか(開発中:false、本番:true)
   pub secure: bool,
 }
 
+/// 物理ファイルの設定
 #[derive(Debug, Clone, Deserialize)]
 pub struct StorageConfig {
-  // 物理ファイル保存場所(Path)
+  // 物理ファイル保存場所のパス
   pub data_dir: String,
 }
 
+/// アップロードの設定
 #[derive(Debug, Clone, Deserialize)]
 pub struct UploadConfig {
   // 最大アップロードサイズ

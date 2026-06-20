@@ -38,17 +38,16 @@ services:
       - watch
       - -x
       - check
-
-    environment:
+      #environment:
       # config crateで APP__... を読み込む想定。
-      APP__ENV: development
-      APP__DATABASE__URL: postgres://yaakodrive:yaakodrive@db:5432/yaakodrive
-      APP__SERVER__HOST: 0.0.0.0
-      APP__SERVER__PORT: 8080
-      APP__COOKIE__SECURE: "false"
-      APP__STORAGE__DATA_DIR: /workspace/data/dev
-      APP__UPLOAD__MAX_SIZE_BYTES: 10485760
-      RUST_LOG: yaakodrive=debug,tower_http=debug
+      #APP__ENV: development
+      #APP__DATABASE__URL: postgres://yaakodrive:yaakodrive@db:5432/yaakodrive
+      #APP__SERVER__HOST: 0.0.0.0
+      #APP__SERVER__PORT: 8080
+      #APP__COOKIE__SECURE: "false"
+      #APP__STORAGE__DATA_DIR: /workspace/data/dev
+      #APP__UPLOAD__MAX_SIZE_BYTES: 10485760
+      #RUST_LOG: yaakodrive=debug,tower_http=debug
 
     volumes:
       # リポジトリ全体を見られるようにする。
@@ -88,8 +87,8 @@ services:
     working_dir: /workspace/frontend
     tty: true
 
-    environment:
-      VITE_API_BASE_URL: http://localhost:8080
+    #environment:
+    #  VITE_API_BASE_URL: http://localhost:8080
 
     volumes:
       - .:/workspace

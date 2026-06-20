@@ -89,6 +89,7 @@ version = "0.1.0"
 dependencies = [
  "config 0.14.1",
  "dotenvy",
+ "serde",
  "thiserror",
 ]
 

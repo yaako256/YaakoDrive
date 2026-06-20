@@ -17,11 +17,11 @@ name: yaakodrive-prod
 
 services:
   db:
-    environment:
-      #POSTGRES_USER: yaakodrive
-      #POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
-      #POSTGRES_DB: yaakodrive
-      TZ: Asia/Tokyo
+    #environment:
+    #POSTGRES_USER: yaakodrive
+    #POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    #POSTGRES_DB: yaakodrive
+    #TZ: Asia/Tokyo
 
     volumes:
       - /srv/yaakodrive/postgres:/var/lib/postgresql/data
