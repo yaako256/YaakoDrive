@@ -27,7 +27,7 @@ DATABASE_SERVICE_NAME := db
 # ==================================
 ### 実行関連(Execution)
 # ==================================
-.PHONY: check run-server
+.PHONY: check run-server test
 
 # サーバ起動(開発用)
 run-server:
@@ -36,6 +36,10 @@ run-server:
 # バックエンドのCargo check
 check:
 	$(COMPOSE_DEV) exec $(BACKEND_SERVICE_NAME) cargo check
+
+# バックエンドのCargo test
+test:
+	$(COMPOSE_DEV) exec $(BACKEND_SERVICE_NAME) cargo test
 
 # ==================================
 ### Database関連

@@ -67,7 +67,7 @@ impl JwtService {
 
   // AccessTokenが有効かどうかの確認
   pub fn verify_access_token(&self, token: &str) -> AuthResult<AccessTokenClaims> {
-    /// AccessTokenClaimsにでコードする
+    // AccessTokenClaimsにでコードする
     decode::<AccessTokenClaims>(token, &self.decoding_key, &Validation::default())
       .map(|data| data.claims)
       .map_err(|e| match e.kind() {

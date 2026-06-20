@@ -4,3 +4,15 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+# workspace内の別クレート
+identity = { path = "../identity" }
+auth = { path = "../auth" }
+node = { path = "../node" }
+
+# workspace共通外部クレート
+thiserror = { workspace = true }
+chrono = { workspace = true }
+
+# 固有クレート
+# 非同期トレイト用
+async-trait = "0.1"
