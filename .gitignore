@@ -7,6 +7,9 @@
 # 記録用フォルダ除外(data/dev/*とdata/prod/*)
 data/*/*
 
+# 自分用フォルダ除外
+detailed_development_guide
+
 # Rustのビルド成果物は巨大になるため必須
 target
 

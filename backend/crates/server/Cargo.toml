@@ -4,3 +4,13 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+# workspace内の別クレート
+config = { path = "../config" }
+api    = { path = "../api" }
+
+# workspace共通外部クレート
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+thiserror = { workspace = true }
+axum = { workspace = true }
+tokio = { workspace = true }

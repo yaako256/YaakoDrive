@@ -6,5 +6,6 @@ mod error;
 mod loader;
 mod models;
 
-//pub use loader::load_config;
-//pub use models::{AppConfig, LLMSleep};
+pub use error::ConfigError;
+pub use loader::load;
+pub use models::*;

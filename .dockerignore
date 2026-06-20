@@ -6,6 +6,10 @@
 .git
 .gitignore
 
+# 自分用フォルダ除外
+.docs
+.memo
+
 # Rust build artifacts
 backend/target
 **/target

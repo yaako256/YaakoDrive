@@ -13,3 +13,9 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 # Json用
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+
+# Webフレームワーク/高レイヤー通信
+axum = "0.8"
+
+# 非同期処理/低レイヤー通信
+tokio = { version = "1", features = ["full"] }

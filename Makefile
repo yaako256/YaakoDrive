@@ -27,11 +27,15 @@ DATABASE_SERVICE_NAME := db
 # ==================================
 ### 実行関連(Execution)
 # ==================================
-.PHONY: check
+.PHONY: check run-server check
+
+# サーバ起動(開発用)
+run-server:
+	$(COMPOSE_DEV) exec $(BACKEND_SERVICE_NAME) cargo run -p server
 
 # バックエンドのCargo check
 check:
-	$(COMPOSE_DEV) exec backend cargo check
+	$(COMPOSE_DEV) exec $(BACKEND_SERVICE_NAME) cargo check
 
 
 
@@ -40,7 +44,12 @@ check:
 ### Docker関連(Docker Management)
 # ==================================
 # ---- 開発用コンテナ ----
-.PHONY: dev-up dev-stop dev-down dev-build dev-logs dev-ps
+.PHONY: env dev-up dev-stop dev-down dev-build dev-logs dev-ps
+
+## envファイル再読み込み用
+# 実態はただのup
+env:
+	$(COMPOSE_DEV) up -d --force-recreate
 
 ## 開発用コンテナを起動(buildでDockerfileの再読み込みもする)
 dev-up:
@@ -85,7 +94,7 @@ backend-test:
 	$(COMPOSE_DEV) exec $(BACKEND_SERVICE_NAME) cargo test
 
 migrate:
-	$(COMPOSE_DEV) exec backend sqlx migrate run
+	$(COMPOSE_DEV) exec $(BACKEND_SERVICE_NAME) sqlx migrate run
 
 
 # ---- 本番用コンテナ ----

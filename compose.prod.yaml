@@ -41,12 +41,12 @@ services:
     # 環境変数の設定
     environment:
       # 実行環境ラベル(上書きconfigファイルの指定に使用)
-      APP__ENV: dev
-      #RUST_LOG: yaakodrive=info,tower_http=info
+      APP_ENV: prod
 
     volumes:
-      # 設定ファイル。秘密情報は環境変数優先。
-      - ./config:/app/config:ro
+      # 設定ファイル(読み取り専用)
+      - ./.config/config.default.toml:/app/.config/config.default.toml:ro
+      - ./.config/config.prod.toml:/app/.config/config.prod.toml:ro
 
       # 実ファイル保存先。バックアップ対象。
       - /srv/yaakodrive/data:/data
