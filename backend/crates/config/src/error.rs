@@ -18,6 +18,8 @@ pub enum ConfigError {
   Env(#[from] dotenvy::Error),
   #[error("Config失敗: {0}")]
   Config(#[from] config::ConfigError),
+  #[error("環境変数の取得失敗: {0}")]
+  Var(#[from] std::env::VarError),
 }
 
 /// Configクレートのリザルト

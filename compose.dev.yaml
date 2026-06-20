@@ -38,15 +38,14 @@ services:
       - watch
       - -x
       - check
-      #environment:
-      # config crateで APP__... を読み込む想定。
-      #APP__ENV: development
-      #APP__DATABASE__URL: postgres://yaakodrive:yaakodrive@db:5432/yaakodrive
-      #APP__SERVER__HOST: 0.0.0.0
-      #APP__SERVER__PORT: 8080
-      #APP__COOKIE__SECURE: "false"
-      #APP__STORAGE__DATA_DIR: /workspace/data/dev
-      #APP__UPLOAD__MAX_SIZE_BYTES: 10485760
+
+    # envファイルの指定
+    env_file: .config/.env.dev
+
+    # 環境変数の設定
+    environment:
+      # 実行環境ラベル(上書きconfigファイルの指定に使用)
+      APP__ENV: dev
       #RUST_LOG: yaakodrive=debug,tower_http=debug
 
     volumes:
