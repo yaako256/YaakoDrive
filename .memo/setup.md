@@ -46,12 +46,12 @@ cargo new config --lib --vcs none
 `dependencies`の書き方がworkspace用になる。
 ```
 [dependencies]
-# 同じworkspace内の別クレート
+# workspace内の別クレート
 aaa = { path = "../aaa" }
 bbb = { path = "../bbb" }
 ccc= { path = "../ccc" }
 
-# workspace共通クレート
+# workspace共通外部クレート
 ddd = { workspace = true }
 eee = { workspace = true }
 

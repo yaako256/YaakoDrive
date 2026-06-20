@@ -17,7 +17,7 @@ use crate::models::AppConfig;
 use crate::error::ConfigResult;
 
 /// configを設定ファイルからロードする
-pub fn load_config() -> ConfigResult<AppConfig> {
+pub fn load() -> ConfigResult<AppConfig> {
   // .env を読む
   // 読み込み失敗はエラー(env上書き必須のものがあるため)
   dotenvy::dotenv()?;

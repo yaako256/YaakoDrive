@@ -6,7 +6,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-# workspace共通クレート
+# workspace共通外部クレート
 thiserror = { workspace = true }
 serde = { workspace = true }
 
