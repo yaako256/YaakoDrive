@@ -63,9 +63,26 @@ fff = "0.8"
 
 
 # フロントエンド側(React)
+## セットアップ前の準備について
 ホスト側にはnpmが入っていない。  
 そのため、頑張って一旦Dockerを立ち上げたうえで、コンテナ内で以下を行う。  
 Dockerfileやcompose.yamlの`npm run`みたいなやつを全部消せは立ち上げるはずである。  
+以下の手順でいい感じにする。
+1. Dockerfileの行を以下のように編集する。
+```dockerfile
+#CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+CMD ["sleep", "infinity"]
+```
+2. conpose.devのvolumeはそのままにしておく(node_modules)
+```yaml
+volumes:
+  - .:/workspace
+  - frontend_node_modules:/workspace/frontend/node_modules
+```
+3. その状態で、コンテナ内で、後述のセットアップをする
+4. Dockerfileを元に戻す
+
+## フロントエンド側のセットアップについて
 1. ルートディレクトリを作成する  
 ```bash
 mkdir frontend

@@ -36,9 +36,9 @@ DATABASE_SERVICE_NAME := db
 # ---- 開発用コンテナ ----
 .PHONY: dev-up dev-stop dev-down dev-build dev-logs dev-ps
 
-## 開発用コンテナを起動
+## 開発用コンテナを起動(buildでDockerfileの再読み込みもする)
 dev-up:
-	$(COMPOSE_DEV) up
+	$(COMPOSE_DEV) up --build
 
 ## 開発用コンテナを停止
 dev-stop:
