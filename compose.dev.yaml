@@ -22,6 +22,16 @@
 name: yaakodrive-dev
 
 services:
+  db:
+    environment:
+      POSTGRES_DB: yaakodrive_dev # ← dev用DB名に上書き
+    # POSTGRES_PASSWORDは.env.devのPOSTGRES_PASSWORDが使われる
+
+    volumes:
+      # devはバックアップ処置などを取らないため
+      # バインドではなく名前付きvolume
+      - postgres_data_dev:/var/lib/postgresql/data
+
   backend:
     container_name: yaakodrive_backend_dev
 
@@ -46,6 +56,8 @@ services:
     environment:
       # 実行環境ラベル(上書きconfigファイルの指定に使用)
       APP_ENV: dev
+      # 設定ファイルのパス
+      APP_CONFIG_DIR: /workspace/.config
 
     volumes:
       # リポジトリ全体を見られるようにする。
@@ -61,7 +73,8 @@ services:
 
       # targetは容量が大きいため名前付きvolumeに逃がす。
       - backend_target:/workspace/backend/target
-      # 開発用アップロードファイル置き場。
+      # 開発用アップロードファイル置き場
+      # 必要になったらコメントを外す
       #- ./data/dev:/workspace/data/dev
 
     ports:
@@ -109,3 +122,4 @@ volumes:
   cargo_git:
   backend_target:
   frontend_node_modules:
+  postgres_data_dev:
