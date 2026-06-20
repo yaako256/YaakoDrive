@@ -3,3 +3,9 @@ resolver = "3"
 members = ["crates/*"]
 
 [workspace.dependencies]
+# エラー型の定義用
+thiserror = "2.0.17"
+# ログ・構造化ロギング
+tracing = "0.1"
+# ログの出力・成形用
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
