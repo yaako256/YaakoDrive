@@ -1,5 +1,11 @@
+/*
+backend/crates/auth/src/lib.rs
+*/
 mod error;
-mod jwt;
-mod model;
-mod password;
-mod token;
+pub mod jwt;
+pub mod model;
+pub mod password;
+pub mod token;
+
+// error型だけ再エクスポート
+pub use error::AuthError;
