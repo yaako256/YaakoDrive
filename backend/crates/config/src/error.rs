@@ -1,6 +1,6 @@
 /*
 backend/crates/config/src/error.rs
-Configクレートのエラー型の定義
+configクレートのエラー型の定義
 */
 
 // 外部クレート
