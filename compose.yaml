@@ -25,18 +25,18 @@ services:
     container_name: yaakodrive_db
     restart: unless-stopped
 
-    environment:
-      POSTGRES_USER: yaakodrive
-      POSTGRES_PASSWORD: yaakodrive
-      POSTGRES_DB: yaakodrive
-      TZ: Asia/Tokyo
+    #environment:
+    #  POSTGRES_USER: yaakodrive
+    #  POSTGRES_PASSWORD: yaakodrive
+    #  POSTGRES_DB: yaakodrive
+    #  TZ: Asia/Tokyo
 
     # 本番ではcompose.prod.yaml側でホストパスへ差し替える。
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U yaakodrive -d yaakodrive"]
+      test: [ "CMD-SHELL", "pg_isready -U yaakodrive -d yaakodrive" ]
       interval: 10s
       timeout: 5s
       retries: 5

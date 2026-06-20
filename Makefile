@@ -27,8 +27,14 @@ DATABASE_SERVICE_NAME := db
 # ==================================
 ### 実行関連(Execution)
 # ==================================
+.PHONY: check
 
-# 後で書く
+# バックエンドのCargo check
+check:
+	$(COMPOSE_DEV) exec backend cargo check
+
+
+
 
 # ==================================
 ### Docker関連(Docker Management)

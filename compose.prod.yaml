@@ -17,11 +17,11 @@ name: yaakodrive-prod
 
 services:
   db:
-    environment:
-      #POSTGRES_USER: yaakodrive
-      #POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
-      #POSTGRES_DB: yaakodrive
-      TZ: Asia/Tokyo
+    #environment:
+    #POSTGRES_USER: yaakodrive
+    #POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    #POSTGRES_DB: yaakodrive
+    #TZ: Asia/Tokyo
 
     volumes:
       - /srv/yaakodrive/postgres:/var/lib/postgresql/data
@@ -35,16 +35,14 @@ services:
       dockerfile: backend/Dockerfile
       target: prod
 
-    #environment: 
-    #      APP__ENV: production
-    #      APP__DATABASE__URL: postgres://yaakodrive:${POSTGRES_PASSWORD}@db:5432/yaakodrive
-    #      APP__JWT__SECRET: ${APP__JWT__SECRET:?set APP__JWT__SECRET}
-    #      APP__SERVER__HOST: 0.0.0.0
-    #      APP__SERVER__PORT: 8080
-    #      APP__COOKIE__SECURE: "true"
-    #      APP__STORAGE__DATA_DIR: /data
-    #      APP__UPLOAD__MAX_SIZE_BYTES: 10485760
-    #      RUST_LOG: yaakodrive=info,tower_http=info
+    # envファイルの指定
+    env_file: .config/.env.prod
+
+    # 環境変数の設定
+    environment:
+      # 実行環境ラベル(上書きconfigファイルの指定に使用)
+      APP__ENV: dev
+      #RUST_LOG: yaakodrive=info,tower_http=info
 
     volumes:
       # 設定ファイル。秘密情報は環境変数優先。

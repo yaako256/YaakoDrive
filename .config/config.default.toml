@@ -1,0 +1,44 @@
+# .config/dev/config.toml
+# 基本の設定ファイル
+# 環境に応じて各tomlファイルで上書きをする
+
+# ==================
+# サーバの設定
+# ==================
+[server]
+# サーバのホストアドレス
+host = "0.0.0.0"
+# サーバの公開ポート
+port = 8080
+
+# DBの設定
+[database]
+# DatabaseのURL(env上書き)
+url = "MY-DATABASE-URL"
+
+# Jwt関連の設定
+[jwt]
+# JWTの秘密鍵(env上書き)
+secret = "MY-STRONG-JWT-SECERT"
+# AccessTokenの期限[秒]
+access_token_expires_secs = 900      # 15分  
+# RefreshTokenの期限[秒]
+refresh_token_expires_secs = 2592000 # 30日
+
+# クッキー認証の設定
+[cookie]
+# クッキー認証をするかどうか
+# [開発環境] クッキーがないのでfalse
+# [本番環境] クッキー認証をするのでtrue
+secure = true
+
+
+# 物理ファイルの設定
+[storage]
+# 物理ファイル保存場所のパス
+data_dir = "./data"
+
+# アップロードの設定
+[upload]
+# 最大アップロードサイズ
+max_size_bytes = 10485760 # 10 MB

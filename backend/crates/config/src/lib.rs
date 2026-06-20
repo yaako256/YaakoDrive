@@ -1,14 +1,10 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+/*
+crates/config/src/lib.rs
+設定の構造体とローダーの定義
+*/
+mod error;
+mod loader;
+mod models;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+//pub use loader::load_config;
+//pub use models::{AppConfig, LLMSleep};

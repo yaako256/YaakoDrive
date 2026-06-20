@@ -1,5 +1,18 @@
+# Environment Variables (Security) ---
+# 秘密鍵やAPIキーを含む可能性があるため絶対にコミットしない
+.env
+.env.*
+!.env*.example
 
+# 記録用フォルダ除外(data/dev/*とdata/prod/*)
+data/*/*
 
+# Rustのビルド成果物は巨大になるため必須
+target
+
+# --- Logs ---
+logs/
+*.log
 
 
 # --- フロントエンド作成時に生成されたもの ---
