@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "WITH RECURSIVE ancestors AS (\n                SELECT parent_id FROM nodes WHERE id = $1\n                UNION ALL\n                SELECT n.parent_id FROM nodes n\n                INNER JOIN ancestors a ON n.id = a.parent_id\n            )\n            SELECT parent_id FROM ancestors WHERE parent_id IS NOT NULL",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "parent_id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "bbe68ab5d5a2f92626c261bba3a722fc384fe6d4fb98a56a8b07569ebe0ed8c6"
+}

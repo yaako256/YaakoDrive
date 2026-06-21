@@ -4,3 +4,18 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+# workspace内の別クレート
+identity = { path = "../identity" }
+auth = { path = "../auth" }
+node = { path = "../node" }
+repository = { path = "../repository" }
+
+# workspace共通外部クレート
+thiserror = { workspace = true }
+chrono = { workspace = true }
+async-trait = { workspace = true }
+uuid = { workspace = true }
+
+# 固有クレート
+# sqlx
+sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono", "macros"] }

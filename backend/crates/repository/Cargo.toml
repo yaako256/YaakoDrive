@@ -12,7 +12,4 @@ node = { path = "../node" }
 # workspace共通外部クレート
 thiserror = { workspace = true }
 chrono = { workspace = true }
-
-# 固有クレート
-# 非同期トレイト用
-async-trait = "0.1"
+async-trait = { workspace = true }
