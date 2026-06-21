@@ -44,7 +44,7 @@ test:
 # ==================================
 ### Database関連
 # ==================================
-.PHONY: migrate-run migrate-add migrate-psql-l migrate-psql migrate-reset
+.PHONY: migrate-run migrate-add migrate-psql-l migrate-psql migrate-reset sqlx-prepare
 
 ## migrationの実行
 migrate-run:
@@ -80,7 +80,10 @@ migrate-reset:
 	$(COMPOSE_DEV) exec $(BACKEND_SERVICE_NAME) \
 	  sqlx migrate run --source /workspace/sql/migrations
 
-
+## sqlxの何か
+sqlx-prepare:
+	$(COMPOSE_DEV) exec $(BACKEND_SERVICE_NAME) \
+		cargo sqlx prepare --workspace
 
 
 

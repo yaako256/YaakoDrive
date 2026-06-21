@@ -26,4 +26,5 @@ pub enum NodeError {
   AlreadyDeleted,
 }
 
+/// nodeクレートのリザルト
 pub type NodeResult<T> = Result<T, NodeError>;
