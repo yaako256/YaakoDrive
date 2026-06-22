@@ -5,6 +5,7 @@ serverクレートのエラー型の定義
 
 // 外部クレート
 // エラー型作成用
+use sqlx;
 use thiserror::Error;
 
 // 内部ライブラリ
@@ -15,6 +16,9 @@ use config;
 pub enum ServerError {
   #[error("[config] {0}")]
   Config(#[from] config::ConfigError),
+
+  #[error("DBエラー: {0}")]
+  Database(#[from] sqlx::Error),
 
   // axumは標準のstd::ioのエラー
   // axum以外でこのエラーが出ないため、そのまま使う

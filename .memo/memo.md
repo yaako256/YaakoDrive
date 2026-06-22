@@ -64,6 +64,13 @@ cargo sqlx prepare --workspace
 これをbackend内で実行してもエラーが消えない場合、rust-analyzerが原因の可能性がある。
 `Ctrl+Shift+P → rust-analyzer: Restart Server`で治ると思われる
 
+## CookieのRefreshToken管理場所について
+RefreshTokenを独立させるため、`/api/auth/refresh`にCookieを登録していたが、それではlogoutで使えなかった。
+そのため、RefreshTokenの管理場所を`/api/auth`にした。
+その結果、login処理でも`RefreshToken`が動くことになった。
+現在は`login`、`refresh`、`logout`の3つだからいいが、増えてきたら`/api/auth/refresh`のように、RefreshTokenの管理場所を限定した方がいいかもしれない。
+
+
 
 # 後で設定化するけどまだ定数のもの
 - アップロード上限10MB

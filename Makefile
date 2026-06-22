@@ -8,7 +8,7 @@
 # ==========================================
 ### メイン / CLI処理用の設定
 # ==========================================
-.PHONY: create-admin user user-x
+.PHONY: create-admin
 
 ## 管理者ユーザ作成
 # 使い方: make create-admin USERNAME=yaako
@@ -16,6 +16,10 @@ create-admin:
 	$(COMPOSE_DEV) exec $(BACKEND_SERVICE_NAME) \
 		cargo run -p cli -- create-admin --username $(USERNAME)
 
+# ==========================================
+### メイン / 開発用DB確認
+# ==========================================
+.PHONY: user user-x
 ## ユーザのテーブル(一部)を表示
 user:
 	$(COMPOSE_DEV) exec $(DATABASE_SERVICE_NAME) \
@@ -25,6 +29,21 @@ user:
 user-x:
 	$(COMPOSE_DEV) exec $(DATABASE_SERVICE_NAME) \
     psql -U yaakodrive -d yaakodrive_dev -x -c "SELECT * FROM users;"
+
+
+.PHONY: token token-x
+
+## RefreshTokensのテーブル(一部)を表示
+token:
+	$(COMPOSE_DEV) exec $(DATABASE_SERVICE_NAME) \
+    psql -U yaakodrive -d yaakodrive_dev -c "SELECT id, user_id, expires_at, created_at, revoked_at FROM refresh_tokens;"
+
+
+## RefreshTokensのテーブル(すべて)を縦に表示
+token-x:
+	$(COMPOSE_DEV) exec $(DATABASE_SERVICE_NAME) \
+    psql -U yaakodrive -d yaakodrive_dev -x -c "SELECT * FROM refresh_tokens;"
+
 
 # ------------------------------------------
 # 開発用コマンドの読み込み
