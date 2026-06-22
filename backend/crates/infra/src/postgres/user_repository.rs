@@ -283,3 +283,46 @@ fn map_user_row(
     disabled_at,
   })
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use auth::model::Role;
+  use chrono::Utc;
+  use identity::UserId;
+
+  // テスト用DBのURLを環境変数から取得するヘルパー
+  async fn test_pool() -> PgPool {
+    let url =
+      std::env::var("DATABASE_URL").expect("DATABASE_URL must be set for integration tests");
+    sqlx::PgPool::connect(&url)
+      .await
+      .expect("Failed to connect")
+  }
+
+  // #[sqlx::test] はテスト用に一時DBを作成・破棄する。テスト間の干渉はない
+  // #[sqlx::test]
+  // migrationsが標準の場所にないため、パスを明示的に指定しないとダメ
+  #[sqlx::test(migrations = "../../../sql/migrations")]
+  async fn test_create_and_find_user(pool: PgPool) {
+    let repo = PgUserRepository::new(pool);
+    let now = Utc::now();
+
+    let user = User {
+      id: UserId::new(),
+      username: "testuser".to_string(),
+      password_hash: "dummy_hash".to_string(),
+      role: Role::User,
+      storage_limit_bytes: 10737418240,
+      created_at: now,
+      updated_at: now,
+      disabled_at: None,
+    };
+
+    repo.create(&user).await.unwrap();
+
+    let found = repo.find_by_username("testuser").await.unwrap();
+    assert!(found.is_some());
+    assert_eq!(found.unwrap().username, "testuser");
+  }
+}

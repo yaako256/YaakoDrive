@@ -24,15 +24,22 @@ use crate::postgres::{
 
 // pgのトラジェクション定義
 pub struct PgTransactionContext {
-  tx: Transaction<'static, Postgres>,
+  //tx: Transaction<'static, Postgres>,
+  pub tx: Transaction<'static, Postgres>,
+  pool: PgPool,
 }
 
 #[async_trait]
 impl TransactionContext for PgTransactionContext {
+  // Pool経由のRepositoryをそのまま返す
+  // アップロードのような複合操作はapp層でtx直接操作する
   fn users(&self) -> &dyn UserRepository {
     // トランザクション内のRepositoryはStep 6で実装する
     // ここでは一旦コンパイルが通る形にしておく
-    todo!()
+    // ↓
+    // ライフタイムの都合上、Poolベースのものを返す
+    // Phase 9のアップロード実装時に必要なら再検討する？
+    todo!("Phase 9で必要になったら実装する")
   }
 
   fn refresh_tokens(&self) -> &dyn RefreshTokenRepository {
@@ -78,11 +85,14 @@ impl PgUnitOfWork {
 #[async_trait]
 impl UnitOfWork for PgUnitOfWork {
   async fn begin(&self) -> RepoResult<Box<dyn TransactionContext>> {
+    /*
     let tx = self
       .pool
       .begin()
       .await
       .map_err(|e| repository::RepoError::Database(e.to_string()))?;
     Ok(Box::new(PgTransactionContext { tx }))
+     */
+    todo!()
   }
 }
