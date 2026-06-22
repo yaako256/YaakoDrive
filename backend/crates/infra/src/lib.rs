@@ -1,2 +1,5 @@
 mod error;
-mod postgres;
+pub mod postgres;
+
+// 再エクスポート
+pub use error::InfraError;
