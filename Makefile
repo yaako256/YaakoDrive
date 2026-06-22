@@ -80,7 +80,7 @@ migrate-reset:
 	$(COMPOSE_DEV) exec $(BACKEND_SERVICE_NAME) \
 	  sqlx migrate run --source /workspace/sql/migrations
 
-## sqlxの何か
+## sqlxのスキーマ作成
 sqlx-prepare:
 	$(COMPOSE_DEV) exec $(BACKEND_SERVICE_NAME) \
 		cargo sqlx prepare --workspace

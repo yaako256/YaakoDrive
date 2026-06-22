@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      DELETE FROM\n        file_contents\n      WHERE\n        node_id = $1\n      ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "624eaf1c71fbd14dc6471e966ef51c0f5da17afddc31b152d1524d3b3402ad02"
+}

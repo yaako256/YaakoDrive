@@ -1,0 +1,19 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      UPDATE nodes SET \n        parent_id = $2, \n        name = $3, \n        status = $4,\n        deleted_at = $5,\n        updated_at = $6\n      WHERE\n        id = $1\n      ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text",
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9a71f1eb62dd79ba44b2ffcd3d3c13e8be448613ced78eb5a8e058b694de4d8c"
+}

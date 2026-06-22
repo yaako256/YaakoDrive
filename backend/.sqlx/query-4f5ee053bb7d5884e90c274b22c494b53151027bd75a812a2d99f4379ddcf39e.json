@@ -1,0 +1,58 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      SELECT\n        node_id,\n        stored_filename,\n        mime_type,\n        size_bytes,\n        status,\n        created_at,\n        updated_at\n      FROM\n        file_contents\n      WHERE\n        node_id = $1\n      ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "node_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "stored_filename",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "mime_type",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "size_bytes",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 4,
+        "name": "status",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 6,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "4f5ee053bb7d5884e90c274b22c494b53151027bd75a812a2d99f4379ddcf39e"
+}
