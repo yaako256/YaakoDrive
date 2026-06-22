@@ -5,6 +5,7 @@ postgresのUserRepository実体を定義
 
 // 外部クレート
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -13,29 +14,80 @@ use auth::model::{Role, User};
 use identity::UserId;
 use repository::{RepoError, RepoResult, UserRepository};
 
+// 自クレート
+// エラー型伝搬用
+use crate::error::{InfraError, InfraResult};
+
+/// postgreSQLのUserRepository実装
 pub struct PgUserRepository {
+  /// DBコネクションプール
   pool: PgPool,
 }
 
 impl PgUserRepository {
+  /// コンストラクタ
   pub fn new(pool: PgPool) -> Self {
     Self { pool }
   }
 }
 
+// エラー型を伝搬させるため、
+// 内部実装ブロックで分け、
+// トレイト実装はすべて .map_err(RepoError::from) で委譲するだけ
 #[async_trait]
 impl UserRepository for PgUserRepository {
+  /// UserIdからUser型を取得する
   async fn find_by_id(&self, id: &UserId) -> RepoResult<Option<User>> {
+    self.find_by_id_impl(id).await.map_err(RepoError::from)
+  }
+
+  /// usernameからUser型を取得する
+  async fn find_by_username(&self, username: &str) -> RepoResult<Option<User>> {
+    self
+      .find_by_username_impl(username)
+      .await
+      .map_err(RepoError::from)
+  }
+
+  /// 新規User行を作成する
+  async fn create(&self, user: &User) -> RepoResult<()> {
+    self.create_impl(user).await.map_err(RepoError::from)
+  }
+
+  /// 既存User行を更新する
+  async fn update(&self, user: &User) -> RepoResult<()> {
+    self.update_impl(user).await.map_err(RepoError::from)
+  }
+
+  /// 全ユーザを取得する
+  async fn list_all(&self) -> RepoResult<Vec<User>> {
+    self.list_all_impl().await.map_err(RepoError::from)
+  }
+}
+
+impl PgUserRepository {
+  /// UserIdからUser型を取得するfind_by_idの内部実装
+  async fn find_by_id_impl(&self, id: &UserId) -> InfraResult<Option<User>> {
     let row = sqlx::query!(
-      "SELECT id, username, password_hash, role, storage_limit_bytes,
-                    created_at, updated_at, disabled_at
-             FROM users WHERE id = $1",
+      r#"
+      SELECT
+        id,
+        username,
+        password_hash,
+        role,
+        storage_limit_bytes,
+        created_at,
+        updated_at,
+        disabled_at
+      FROM users
+      WHERE id = $1
+      "#,
       id.as_uuid()
     )
     .fetch_optional(&self.pool)
-    .await
-    .map_err(|e| RepoError::Database(e.to_string()))?;
+    .await?;
 
+    // 匿名構造体をUser型に変換して返す
     row
       .map(|r| {
         map_user_row(
@@ -52,17 +104,31 @@ impl UserRepository for PgUserRepository {
       .transpose()
   }
 
-  async fn find_by_username(&self, username: &str) -> RepoResult<Option<User>> {
+  /// usernameからUser型を取得するfind_by_usernameの内部実装
+  async fn find_by_username_impl(&self, username: &str) -> InfraResult<Option<User>> {
+    // usernameから対象要素を取得
     let row = sqlx::query!(
-      "SELECT id, username, password_hash, role, storage_limit_bytes,
-                    created_at, updated_at, disabled_at
-             FROM users WHERE username = $1",
+      r#"
+      SELECT
+        id,
+        username,
+        password_hash,
+        role,
+        storage_limit_bytes,
+        created_at,
+        updated_at,
+        disabled_at
+      FROM
+        users
+      WHERE
+        username = $1
+      "#,
       username
     )
     .fetch_optional(&self.pool)
-    .await
-    .map_err(|e| RepoError::Database(e.to_string()))?;
+    .await?;
 
+    // 匿名構造体をUser型に変換して返す
     row
       .map(|r| {
         map_user_row(
@@ -79,12 +145,22 @@ impl UserRepository for PgUserRepository {
       .transpose()
   }
 
-  async fn create(&self, user: &User) -> RepoResult<()> {
+  /// 新規User行を作成するcreateの内部実装
+  async fn create_impl(&self, user: &User) -> InfraResult<()> {
     sqlx::query!(
-      "INSERT INTO users
-                (id, username, password_hash, role, storage_limit_bytes,
-                 created_at, updated_at, disabled_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+      r#"
+      INSERT INTO users (
+        id,
+        username,
+        password_hash,
+        role,
+        storage_limit_bytes,
+        created_at,
+        updated_at,
+        disabled_at
+        )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      "#,
       user.id.as_uuid(),
       user.username,
       user.password_hash,
@@ -95,18 +171,31 @@ impl UserRepository for PgUserRepository {
       user.disabled_at,
     )
     .execute(&self.pool)
-    .await
-    .map_err(|e| RepoError::Database(e.to_string()))?;
+    .await?;
 
+    // sqlx::query!はPgQueryResult
+    // InfraResultとして返す
     Ok(())
   }
 
-  async fn update(&self, user: &User) -> RepoResult<()> {
+  /// 既存User行を更新するupdateの内部実装
+  async fn update_impl(&self, user: &User) -> InfraResult<()> {
+    // 対象idのUser情報を更新する
+    // 確認のために更新件数を取得
     let affected = sqlx::query!(
-      "UPDATE users
-             SET username = $2, password_hash = $3, role = $4,
-                 storage_limit_bytes = $5, updated_at = $6, disabled_at = $7
-             WHERE id = $1",
+      r#"
+      UPDATE
+        users
+      SET
+        username = $2,
+        password_hash = $3,
+        role = $4,
+        storage_limit_bytes = $5,
+        updated_at = $6,
+        disabled_at = $7
+      WHERE
+        id = $1
+      "#,
       user.id.as_uuid(),
       user.username,
       user.password_hash,
@@ -116,26 +205,40 @@ impl UserRepository for PgUserRepository {
       user.disabled_at,
     )
     .execute(&self.pool)
-    .await
-    .map_err(|e| RepoError::Database(e.to_string()))?
+    .await?
     .rows_affected();
 
+    // 取得失敗したらNotFoundエラー
     if affected == 0 {
-      return Err(RepoError::NotFound);
+      return Err(InfraError::NotFound);
     }
+
     Ok(())
   }
 
-  async fn list_all(&self) -> RepoResult<Vec<User>> {
+  /// 全ユーザを取得するlist_allの内部実装
+  async fn list_all_impl(&self) -> InfraResult<Vec<User>> {
     let rows = sqlx::query!(
-      "SELECT id, username, password_hash, role, storage_limit_bytes,
-                    created_at, updated_at, disabled_at
-             FROM users ORDER BY created_at ASC"
+      r#"
+      SELECT
+        id,
+        username,
+        password_hash,
+        role,
+        storage_limit_bytes,
+        created_at,
+        updated_at,
+        disabled_at
+      FROM
+        users
+      ORDER BY
+        created_at ASC
+      "#
     )
     .fetch_all(&self.pool)
-    .await
-    .map_err(|e| RepoError::Database(e.to_string()))?;
+    .await?;
 
+    // 匿名構造体をUser型にして返す
     rows
       .into_iter()
       .map(|r| {
@@ -154,17 +257,20 @@ impl UserRepository for PgUserRepository {
   }
 }
 
+/// 匿名構造体をUser型に変換する内部関数
 fn map_user_row(
   id: Uuid,
   username: String,
   password_hash: String,
   role: String,
   storage_limit_bytes: i64,
-  created_at: chrono::DateTime<chrono::Utc>,
-  updated_at: chrono::DateTime<chrono::Utc>,
-  disabled_at: Option<chrono::DateTime<chrono::Utc>>,
-) -> RepoResult<User> {
-  let role = Role::try_from(role.as_str()).map_err(|e| RepoError::Database(e))?;
+  created_at: DateTime<Utc>,
+  updated_at: DateTime<Utc>,
+  disabled_at: Option<DateTime<Utc>>,
+) -> InfraResult<User> {
+  // 文字列からEnum型へ変換
+  // 失敗時はエラー伝搬
+  let role = Role::try_from(role.as_str())?;
 
   Ok(User {
     id: UserId::from_uuid(id),

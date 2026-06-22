@@ -75,7 +75,7 @@ impl NodeRepository for PgNodeRepository {
       .map_err(RepoError::from)
   }
 
-  /// 完全削除をする
+  /// 物理削除をする
   async fn hard_delete(&self, id: &NodeId) -> RepoResult<()> {
     self.hard_delete_impl(id).await.map_err(RepoError::from)
   }
@@ -106,8 +106,10 @@ impl PgNodeRepository {
         deleted_at, 
         created_at, 
         updated_at 
-      FROM nodes 
-      WHERE id = $1
+      FROM
+        nodes 
+      WHERE
+        id = $1
       "#,
       id.as_uuid()
     )
@@ -156,14 +158,16 @@ impl PgNodeRepository {
           deleted_at, 
           created_at, 
           updated_at
-
-        FROM nodes
-
-        WHERE owner_user_id = $1 
+        FROM
+          nodes
+        WHERE
+          owner_user_id = $1 
           AND parent_id = $2
-          AND deleted_at IS NULL AND status = 'active'
-
-        ORDER BY node_type DESC, name ASC
+          AND deleted_at IS NULL
+          AND status = 'active'
+        ORDER BY
+          node_type DESC,
+          name ASC
         "#,
         owner_user_id.as_uuid(),
         pid.as_uuid()
@@ -202,12 +206,16 @@ impl PgNodeRepository {
         deleted_at, 
         created_at, 
         updated_at
-      FROM nodes
-      WHERE owner_user_id = $1 
+      FROM
+        nodes
+      WHERE
+        owner_user_id = $1 
         AND parent_id IS NULL 
         AND deleted_at IS NULL 
         AND status = 'active' 
-      ORDER BY node_type DESC, name ASC
+      ORDER BY
+        node_type DESC,
+        name ASC
       "#,
       owner_user_id.as_uuid()
     )
@@ -235,6 +243,7 @@ impl PgNodeRepository {
 
   /// 新規ノードを作成するcreateの内部実装
   async fn create_impl(&self, node: &Node) -> InfraResult<()> {
+    // 新規Node行を作成
     sqlx::query!(
       r#"
       INSERT INTO nodes (
@@ -277,6 +286,8 @@ impl PgNodeRepository {
 
   /// Node情報の更新をするupdateの内部実装
   async fn update_impl(&self, node: &Node) -> InfraResult<()> {
+    // 対象idのNode情報を更新する
+    // 確認のために更新件数を取得
     let affected = sqlx::query!(
       r#"
       UPDATE nodes SET 
@@ -285,7 +296,8 @@ impl PgNodeRepository {
         status = $4,
         deleted_at = $5,
         updated_at = $6
-      WHERE id = $1
+      WHERE
+        id = $1
       "#,
       node.id.as_uuid(),
       node.parent_id.as_ref().map(|id| *id.as_uuid()),
@@ -298,9 +310,11 @@ impl PgNodeRepository {
     .await?
     .rows_affected();
 
+    // 取得失敗したらNotFoundエラー
     if affected == 0 {
       return Err(InfraError::NotFound);
     }
+
     Ok(())
   }
 
@@ -325,7 +339,8 @@ impl PgNodeRepository {
       UPDATE nodes SET 
         deleted_at = $2, 
         updated_at = $2
-      WHERE id IN (SELECT id FROM descendants)
+      WHERE
+        id IN (SELECT id FROM descendants)
         AND deleted_at IS NULL
       "#,
       id.as_uuid(),
@@ -334,20 +349,34 @@ impl PgNodeRepository {
     .execute(&self.pool)
     .await?;
 
+    // sqlx::query!はPgQueryResult
+    // InfraResultとして返す
     Ok(())
   }
 
-  /// 完全削除をするhard_deleteの内部実装
+  /// 物理削除をするhard_deleteの内部実装
   async fn hard_delete_impl(&self, id: &NodeId) -> InfraResult<()> {
-    sqlx::query!("DELETE FROM nodes WHERE id = $1", id.as_uuid())
-      .execute(&self.pool)
-      .await?;
+    // 対象idの物理削除をする
+    sqlx::query!(
+      r#"
+      DELETE FROM
+        nodes
+      WHERE
+        id = $1
+      "#,
+      id.as_uuid()
+    )
+    .execute(&self.pool)
+    .await?;
 
+    // sqlx::query!はPgQueryResult
+    // InfraResultとして返す
     Ok(())
   }
 
   /// NodeIdから祖先のリストをVec<NodeId>で取得するfind_ancestor_idsの内部実装
   async fn find_ancestor_ids_impl(&self, id: &NodeId) -> InfraResult<Vec<NodeId>> {
+    // 祖先リストを取得
     let rows = sqlx::query!(
       r#"
       WITH RECURSIVE ancestors AS (
@@ -359,15 +388,20 @@ impl PgNodeRepository {
         FROM nodes n
         INNER JOIN ancestors a ON n.id = a.parent_id
       )
-      SELECT parent_id
-      FROM ancestors 
-      WHERE parent_id IS NOT NULL"#,
+      SELECT
+        parent_id
+      FROM
+        ancestors 
+      WHERE
+        parent_id IS NOT NULL
+      "#,
       id.as_uuid()
     )
     .fetch_all(&self.pool)
     .await?;
 
     Ok(
+      // 匿名構造体をNodeIdに直して返す
       rows
         .into_iter()
         .filter_map(|r| r.parent_id)
@@ -377,6 +411,7 @@ impl PgNodeRepository {
   }
 }
 
+/// 匿名構造体をNode型に変換する内部関数
 fn map_node_row(
   id: Uuid,
   owner_user_id: Uuid,
@@ -388,6 +423,8 @@ fn map_node_row(
   created_at: DateTime<Utc>,
   updated_at: DateTime<Utc>,
 ) -> InfraResult<Node> {
+  // 文字列からEnum型へ変換
+  // 失敗時はエラー伝搬
   let node_type = NodeType::try_from(node_type.as_str())?;
   let status = NodeStatus::try_from(status.as_str())?;
 

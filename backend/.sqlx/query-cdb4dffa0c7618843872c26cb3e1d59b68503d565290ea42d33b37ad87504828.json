@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      INSERT INTO file_contents (\n        node_id,\n        stored_filename,\n        mime_type,\n        size_bytes,\n        status,\n        created_at,\n        updated_at\n      )\n      VALUES ($1, $2, $3, $4, $5, $6, $7)\n      ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Int8",
+        "Text",
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "cdb4dffa0c7618843872c26cb3e1d59b68503d565290ea42d33b37ad87504828"
+}

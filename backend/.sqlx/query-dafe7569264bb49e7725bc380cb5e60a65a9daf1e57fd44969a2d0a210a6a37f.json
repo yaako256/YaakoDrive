@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n      SELECT \n        id, \n        owner_user_id, \n        parent_id, \n        name, \n        node_type, \n        status, \n        deleted_at, \n        created_at, \n        updated_at\n      FROM nodes\n      WHERE owner_user_id = $1 \n        AND parent_id IS NULL \n        AND deleted_at IS NULL \n        AND status = 'active' \n      ORDER BY node_type DESC, name ASC\n      ",
+  "query": "\n      SELECT \n        id, \n        owner_user_id, \n        parent_id, \n        name, \n        node_type, \n        status, \n        deleted_at, \n        created_at, \n        updated_at \n      FROM\n        nodes \n      WHERE\n        id = $1\n      ",
   "describe": {
     "columns": [
       {
@@ -66,5 +66,5 @@
       false
     ]
   },
-  "hash": "f7ce13ad97491823982cb3008074834cd55f5baf32ba42e6b1bc120973b3f30b"
+  "hash": "dafe7569264bb49e7725bc380cb5e60a65a9daf1e57fd44969a2d0a210a6a37f"
 }

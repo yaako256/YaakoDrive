@@ -1,0 +1,19 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      UPDATE file_contents SET\n        stored_filename = $2,\n        mime_type = $3,\n        size_bytes = $4,\n        status = $5,\n        updated_at = $6\n      WHERE\n        node_id = $1\n      ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Int8",
+        "Text",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0152d82055b7ec692fe1727012acfde18cd78192c3867f0ba82aa01b14a651e6"
+}
