@@ -65,6 +65,12 @@ cargo sqlx prepare --workspace
 `Ctrl+Shift+P → rust-analyzer: Restart Server`で治ると思われる
 
 
+# 後で設定化するけどまだ定数のもの
+- アップロード上限10MB
+- パスワード最低文字数8文字
+
+
+
 # キーワードメモメモ
 
 ユートピア(ユトイピア？)ってやつを使うとapi関連の整合性を簡単に取れる？
