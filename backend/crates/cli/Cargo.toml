@@ -4,3 +4,20 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+# workspace内の別クレート
+config = { path = "../config" }
+infra  = { path = "../infra" }
+app    = { path = "../app" }
+
+# workspace共通外部クレート
+tokio  = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+thiserror = { workspace = true }
+sqlx = { workspace = true }
+
+# 固有クレート
+# CLI引数パース用
+clap = { version = "4", features = ["derive"] }
+# パスワード対話入力用
+rpassword = "7"

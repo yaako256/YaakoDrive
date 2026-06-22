@@ -28,3 +28,9 @@ uuid = { version = "1", features = ["v4", "serde"] }
 
 # 時間型用
 chrono = { version = "0.4", features = ["serde"] }
+
+# sqlx
+sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono", "macros"] }
+
+# 16進数化用
+hex = "0.4"

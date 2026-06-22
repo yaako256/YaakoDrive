@@ -12,15 +12,13 @@ thiserror = { workspace = true }
 serde = { workspace = true }
 chrono = { workspace = true }
 uuid = { workspace = true }
-
+hex = { workspace = true }
 
 
 # 固有クレート
 # JWT用
 jsonwebtoken = "9"
-# ハッシュ化用
+# パスワードハッシュ化用
 argon2 = "0.5"
 # 乱数生成用
 rand = "0.8"
-# 16進数化用
-hex = "0.4"

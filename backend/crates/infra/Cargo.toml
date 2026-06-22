@@ -15,7 +15,4 @@ thiserror = { workspace = true }
 chrono = { workspace = true }
 async-trait = { workspace = true }
 uuid = { workspace = true }
-
-# 固有クレート
-# sqlx
-sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono", "macros"] }
+sqlx = { workspace = true }

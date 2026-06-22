@@ -4,3 +4,18 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+# workspace内の別クレート
+auth       = { path = "../auth" }
+identity   = { path = "../identity" }
+node       = { path = "../node" }
+repository = { path = "../repository" }
+
+# workspace共通外部クレート
+thiserror  = { workspace = true }
+chrono     = { workspace = true }
+async-trait = { workspace = true }
+hex = { workspace = true }
+
+# 固有クレート
+# 通常ハッシュ化用
+sha2 = "0.10"
