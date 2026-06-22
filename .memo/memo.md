@@ -1,6 +1,6 @@
 # toDoメモ
-- authクレートなどがUTC管理になっているのでjstにする？
-
+- 全体がUTC管理になっているのでjstにする？
+- usecaseで、hash_tokenがloginにあり、すべてがそれを見ててキモイ。でもusecaseじゃないものを入れるのもきもい
 
 
 

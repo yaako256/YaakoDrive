@@ -104,9 +104,11 @@ dependencies = [
  "async-trait",
  "auth",
  "chrono",
+ "hex",
  "identity",
  "node",
  "repository",
+ "sha2",
  "thiserror",
 ]
 
