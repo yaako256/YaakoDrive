@@ -10,7 +10,8 @@ use std::sync::Arc;
 use auth::jwt::JwtService;
 use config::AppConfig;
 use infra::postgres::{
-  refresh_token_repository::PgRefreshTokenRepository, user_repository::PgUserRepository,
+  node_repository::PgNodeRepository, refresh_token_repository::PgRefreshTokenRepository,
+  user_repository::PgUserRepository,
 };
 
 /// axumのState。Arcで包んでclone可能にする
@@ -20,4 +21,5 @@ pub struct AppState {
   pub jwt_service: Arc<JwtService>,
   pub user_repo: Arc<PgUserRepository>,
   pub refresh_token_repo: Arc<PgRefreshTokenRepository>,
+  pub node_repo: Arc<PgNodeRepository>,
 }

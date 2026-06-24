@@ -13,7 +13,7 @@ use repository::{RefreshTokenRepository, UserRepository};
 
 // 自クレート
 use crate::error::{AppError, AppResult};
-use crate::usecase::auth::login::hash_token;
+use crate::usecase::auth::hash_token;
 
 pub struct RefreshInput {
   pub refresh_token: String,

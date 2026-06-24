@@ -45,6 +45,34 @@ token-x:
     psql -U yaakodrive -d yaakodrive_dev -x -c "SELECT * FROM refresh_tokens;"
 
 
+.PHONY: node node-x
+
+## Nodeのテーブル(一部)を表示
+node:
+#	$(COMPOSE_DEV) exec $(DATABASE_SERVICE_NAME) \
+    psql -U yaakodrive -d yaakodrive_dev -c "SELECT id, owner_user_id, parent_id, name, node_type, created_at, updated_at, deleted_at FROM nodes;"
+	$(COMPOSE_DEV) exec $(DATABASE_SERVICE_NAME) \
+    psql -U yaakodrive -d yaakodrive_dev -c "SELECT id, owner_user_id, parent_id, name, node_type, updated_at, deleted_at FROM nodes;"
+
+
+## Nodeのテーブル(すべて)を縦に表示
+node-x:
+	$(COMPOSE_DEV) exec $(DATABASE_SERVICE_NAME) \
+    psql -U yaakodrive -d yaakodrive_dev -x -c "SELECT * FROM nodes;"
+
+
+.PHONY: file file-x
+
+## file_contentsのテーブル(一部)を表示
+file:
+	$(COMPOSE_DEV) exec $(DATABASE_SERVICE_NAME) \
+    psql -U yaakodrive -d yaakodrive_dev -c "SELECT node_id, stored_filename, mime_type, size_bytes, status FROM file_contents;"
+
+## file_contentsのテーブル(すべて)を縦に表示
+file-x:
+	$(COMPOSE_DEV) exec $(DATABASE_SERVICE_NAME) \
+    psql -U yaakodrive -d yaakodrive_dev -x -c "SELECT * FROM file_contents;"
+
 # ------------------------------------------
 # 開発用コマンドの読み込み
 # (ファイルがなければ無視する -include)
