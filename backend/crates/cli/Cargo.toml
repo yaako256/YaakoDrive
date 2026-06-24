@@ -6,8 +6,9 @@ edition = "2024"
 [dependencies]
 # workspace内の別クレート
 config = { path = "../config" }
-infra  = { path = "../infra" }
-app    = { path = "../app" }
+infra = { path = "../infra" }
+app = { path = "../app" }
+repository = { path = "../repository" }
 
 # workspace共通外部クレート
 tokio  = { workspace = true }

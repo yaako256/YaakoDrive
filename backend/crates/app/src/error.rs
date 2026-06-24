@@ -35,7 +35,9 @@ pub enum AppError {
   StorageLimitExceeded,
 }
 
-pub(crate) type AppResult<T> = Result<T, AppError>;
+// 今後apiクレートで使いたくなるかもしれないため、(crate)を外す
+//pub(crate) type AppResult<T> = Result<T, AppError>;
+pub type AppResult<T> = Result<T, AppError>;
 
 // RepoError → AppError
 impl From<repository::RepoError> for AppError {

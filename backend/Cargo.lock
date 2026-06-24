@@ -407,6 +407,7 @@ dependencies = [
  "clap",
  "config 0.1.0",
  "infra",
+ "repository",
  "rpassword",
  "sqlx",
  "thiserror",
