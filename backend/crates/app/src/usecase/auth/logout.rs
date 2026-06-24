@@ -8,7 +8,7 @@ use repository::RefreshTokenRepository;
 
 // 自クレート
 use crate::error::{AppError, AppResult};
-use crate::usecase::auth::login::hash_token;
+use crate::usecase::auth::hash_token;
 
 // ログアウトの入力
 pub struct LogoutInput {

@@ -5,7 +5,6 @@ backend/crates/app/src/usecase/auth/login.rs
 
 // 外部クレート
 use chrono::{Duration, Utc};
-use sha2::{Digest, Sha256};
 
 // 内部ライブラリ
 use auth::{
@@ -16,6 +15,7 @@ use repository::{RefreshTokenRepository, UserRepository};
 
 // 自クレート
 use crate::error::{AppError, AppResult};
+use crate::usecase::auth::hash_token;
 
 // ログイン認証の入力
 pub struct LoginInput {
@@ -105,17 +105,4 @@ impl<'a> LoginUseCase<'a> {
       refresh_token: raw_token,
     })
   }
-}
-
-/// Refresh Tokenのハッシュ化
-/// argon2は不要。SHA-256で十分
-/// (推測不能な乱数を短時間ハッシュするだけ)
-/// DefaultHasherは衝突耐性がないため使わない
-pub(crate) fn hash_token(token: &str) -> String {
-  // hasherの設定
-  let mut hasher = Sha256::new();
-  hasher.update(token.as_bytes());
-
-  // ハッシュ化をする
-  hex::encode(hasher.finalize())
 }

@@ -1,6 +1,7 @@
 /*
 backend/crates/app/src/usecase/node/move_node.rs
 フォルダやファイルの位置を移動するユースケース
+移動時の循環チェックが重要。絶対に子孫には移動させない。
 */
 
 // 外部クレート
