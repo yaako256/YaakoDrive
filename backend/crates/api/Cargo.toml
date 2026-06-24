@@ -5,20 +5,23 @@ edition = "2024"
 
 [dependencies]
 # workspace内の別クレート
-app        = { path = "../app" }
-auth       = { path = "../auth" }
-config     = { path = "../config" }
-identity   = { path = "../identity" }
-infra      = { path = "../infra" }
+app = { path = "../app" }
+auth = { path = "../auth" }
+config = { path = "../config" }
+identity = { path = "../identity" }
+infra = { path = "../infra" }
 repository = { path = "../repository" }
+node = { path = "../node" }
 
 # workspace共通外部クレート
-axum       = { workspace = true }
-serde      = { workspace = true }
+axum = { workspace = true }
+serde = { workspace = true }
 serde_json = { workspace = true }
-tokio      = { workspace = true }
-tracing    = { workspace = true }
-thiserror  = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+thiserror = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
 
 # 固有クレート
 # Cookie取得用

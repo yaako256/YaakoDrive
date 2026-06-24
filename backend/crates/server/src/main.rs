@@ -21,8 +21,8 @@ use tracing::info;
 use api::state::AppState;
 use auth::jwt::JwtService;
 use infra::postgres::{
-  db::create_pool, refresh_token_repository::PgRefreshTokenRepository,
-  user_repository::PgUserRepository,
+  db::create_pool, node_repository::PgNodeRepository,
+  refresh_token_repository::PgRefreshTokenRepository, user_repository::PgUserRepository,
 };
 
 // 自クレート
@@ -76,6 +76,7 @@ async fn run() -> ServerResult<()> {
     jwt_service,
     user_repo: Arc::new(PgUserRepository::new(pool.clone())),
     refresh_token_repo: Arc::new(PgRefreshTokenRepository::new(pool.clone())),
+    node_repo: Arc::new(PgNodeRepository::new(pool.clone())),
   };
 
   info!("Starting YaakoDrive server");

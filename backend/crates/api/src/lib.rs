@@ -1,5 +1,6 @@
 pub mod cookie;
 mod error;
+mod extractor;
 pub mod handlers;
 pub mod response;
 pub mod router;
