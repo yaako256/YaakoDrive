@@ -39,6 +39,11 @@ impl IntoResponse for ApiAppError {
         "forbidden",
         "権限がありません".to_string(),
       ),
+      AppError::StorageLimitExceeded => (
+        StatusCode::CONFLICT,
+        "storage_limit_exceeded",
+        "ストレージ容量の上限に達しています".to_string(),
+      ),
       AppError::NotFound(msg) => (StatusCode::NOT_FOUND, "not_found", msg),
       AppError::AlreadyExists(msg) => (StatusCode::CONFLICT, "already_exists", msg),
       AppError::InvalidInput(msg) => (StatusCode::UNPROCESSABLE_ENTITY, "invalid_request", msg),

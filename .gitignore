@@ -17,6 +17,9 @@ target
 logs/
 *.log
 
+# テスト用cookie
+cookie.txt
+
 # これは追加しないらしい
 !.sqlx
 

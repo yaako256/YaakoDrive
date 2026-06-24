@@ -30,6 +30,9 @@ pub enum AppError {
 
   #[error("auth error: {0}")]
   Auth(String),
+
+  #[error("storage limit exceeded")]
+  StorageLimitExceeded,
 }
 
 pub(crate) type AppResult<T> = Result<T, AppError>;
