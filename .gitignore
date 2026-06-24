@@ -19,6 +19,8 @@ logs/
 
 # テスト用cookie
 cookie.txt
+cookies.txt
+cookies_*.txt
 
 # これは追加しないらしい
 !.sqlx
