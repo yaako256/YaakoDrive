@@ -11,6 +11,11 @@ use chrono::{DateTime, Utc};
 // Id型用
 use identity::{RefreshTokenId, UserId};
 
+// 自クレート
+use crate::error::AuthResult;
+use crate::password::hash_password;
+use crate::validation::{validate_password, validate_username};
+
 /// ロールの列挙型
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Role {
@@ -54,6 +59,54 @@ pub struct User {
   pub disabled_at: Option<DateTime<Utc>>,
 }
 impl User {
+  // --- コンストラクタ系 ---
+  /// ユーザを作成する共通関数
+  fn new(
+    username: String,
+    password: String,
+    role: Role,
+    storage_limit_bytes: i64,
+  ) -> AuthResult<Self> {
+    // ユーザ名検証
+    validate_username(&username)?;
+    // パスワード検証
+    validate_password(&password)?;
+
+    // パスワードハッシュ化
+    let password_hash = hash_password(&password)?;
+
+    Ok(Self {
+      id: UserId::new(),
+      username,
+      password_hash,
+      role,
+      storage_limit_bytes,
+      created_at: Utc::now(),
+      updated_at: Utc::now(),
+      disabled_at: None,
+    })
+  }
+
+  /// 通常ユーザを作成する
+  pub fn new_user(username: String, password: String) -> AuthResult<Self> {
+    Self::new(
+      username,
+      password,
+      Role::User,
+      10 * 1024 * 1024 * 1024, // 仮で10MB
+    )
+  }
+
+  /// 管理者を作成する
+  pub fn new_admin(username: String, password: String) -> AuthResult<Self> {
+    Self::new(
+      username,
+      password,
+      Role::Admin,
+      20 * 1024 * 1024 * 1024, // 仮で20MB → いつかenv等にする
+    )
+  }
+
   /// disabledされているか
   pub fn is_disabled(&self) -> bool {
     self.disabled_at.is_some()
