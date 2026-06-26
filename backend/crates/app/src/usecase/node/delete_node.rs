@@ -35,7 +35,7 @@ impl<'a> DeleteNodeUseCase<'a> {
       .ok_or(AppError::NotFound("node not found".to_string()))?;
 
     // 他ユーザのNodeは削除できない
-    if node.owner_user_id() != &input.requester_user_id {
+    if node.ensure_owner(&input.requester_user_id) {
       return Err(AppError::NotFound("node not found".to_string()));
     }
 

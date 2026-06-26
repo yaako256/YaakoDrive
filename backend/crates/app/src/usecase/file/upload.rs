@@ -10,11 +10,12 @@ use uuid::Uuid;
 // 内部ライブラリ
 use identity::{NodeId, UserId};
 use node::model::{FileContent, Node};
-use repository::{NodeRepository, RepoError, UnitOfWork};
+use repository::{NodeRepository, UnitOfWork};
 use storage::service::{StorageService, TempFile};
 
 // 自クレート
 use crate::error::{AppError, AppResult};
+use crate::usecase::node::map_name_conflict;
 
 pub struct UploadFileInput {
   pub owner_user_id: UserId,
@@ -147,10 +148,7 @@ impl<'a> UploadFileUseCase<'a> {
     // pending で DB 登録
     if let Err(e) = tx.insert_node(&node).await {
       tx.rollback().await.ok();
-      return Err(match e {
-        RepoError::Conflict(_) => AppError::AlreadyExists("same name already exists".to_string()),
-        other => AppError::from(other),
-      });
+      return Err(map_name_conflict(e));
     }
 
     if let Err(e) = tx.insert_file_content(&file_content).await {

@@ -119,6 +119,7 @@ impl Node {
   }
 
   /// 新規フォルダの作成
+  /// active状態で作成
   pub fn new_folder(
     owner_user_id: UserId,
     parent_id: Option<NodeId>,
@@ -222,6 +223,11 @@ impl Node {
   /// activeかどうか
   pub fn is_active(&self) -> bool {
     self.status == NodeStatus::Active && !self.is_deleted()
+  }
+
+  /// ownerが一致するかどうか
+  pub fn ensure_owner(&self, user_id: &UserId) -> bool {
+    &self.owner_user_id == user_id
   }
 
   // ---- ドメインロジック系 ----

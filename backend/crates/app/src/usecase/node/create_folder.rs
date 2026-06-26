@@ -9,7 +9,10 @@ use node::model::Node;
 use repository::NodeRepository;
 
 // 自クレート
-use crate::error::{AppError, AppResult};
+use crate::{
+  error::{AppError, AppResult},
+  usecase::node::map_name_conflict,
+};
 
 pub struct CreateFolderInput {
   pub owner_user_id: UserId,
@@ -54,21 +57,15 @@ impl<'a> CreateFolderUseCase<'a> {
       }
     }
 
-    // 新規フォルダのNode型を作成(一旦pending)
-    let mut node = Node::new_folder(input.owner_user_id, input.parent_id, input.name)?;
-    // Activeにする
-    node.activate()?;
+    // 新規フォルダのNode型を作成(active)
+    let node = Node::new_folder(input.owner_user_id, input.parent_id, input.name)?;
 
     // 実際に作成
-    self.node_repo.create(&node).await.map_err(|e| {
-      // UNIQUE制約違反 → 同名フォルダが存在する
-      match e {
-        repository::RepoError::Conflict(_) => {
-          AppError::AlreadyExists("same name already exists".to_string())
-        }
-        other => AppError::from(other),
-      }
-    })?;
+    self
+      .node_repo
+      .create(&node)
+      .await
+      .map_err(map_name_conflict)?;
 
     Ok(node)
   }
