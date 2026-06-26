@@ -22,10 +22,6 @@ frontend/dist
 .env
 data/*
 
-# マウントの設定のせいでここに作られちゃった
-# backend/data/files/の中身がいろいろある
-backend/data/*/*
-
 # Editor / OS
 .vscode
 .idea
