@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      SELECT\n        fc.mime_type as \"mime_type!\",\n        COUNT(*)::BIGINT as \"count!: i64\"\n      FROM nodes n\n      JOIN file_contents fc ON fc.node_id = n.id\n      WHERE n.owner_user_id = $1\n        AND n.deleted_at IS NULL\n        AND n.status = 'active'\n        AND fc.status = 'active'\n      GROUP BY fc.mime_type\n      ORDER BY COUNT(*) DESC\n      ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "mime_type!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "count!: i64",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "9c6e225fb1f4c8eb066c434deb0adcdb6a4febafdd8e8867768a016918b74b40"
+}

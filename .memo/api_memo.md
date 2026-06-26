@@ -172,3 +172,65 @@ curl -s -b cookies.txt http://localhost:9090/api/nodes/{node_id}/download-url | 
 # アップロード失敗時に tmp/ に残骸が残らない ← 残ってないものはわからん
 ```
 
+
+## ゴミ箱・検索・ダッシュボード機能
+```bash
+# 実行場所にあらかじめupload_test.txtなどを用意しておく
+
+# ヘルスチェック
+curl -s http://localhost:9090/api/health | jq
+
+# ログインしてCookieを取得(1ユーザ目)
+curl -s -c cookies_1.txt -X POST http://localhost:9090/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"yaako-admin","password":"yaakoadmin"}' | jq
+
+# refresh
+curl -s -b cookies_1.txt -c cookies.txt -X POST \
+  http://localhost:9090/api/auth/refresh | jq
+
+# Logout
+curl -s -b cookies_1.txt -X POST \
+  http://localhost:9090/api/auth/logout | jq
+
+
+
+# ゴミ箱一覧
+curl -s -b cookies_1.txt http://localhost:9090/api/trash | jq
+
+# ゴミ箱に移動(フォルダなら中身も)
+curl -s -b cookies_1.txt -X DELETE http://localhost:9090/api/nodes/{id} | jq
+
+# ゴミ箱内フォルダの中身
+curl -s -b cookies_1.txt http://localhost:9090/api/trash/{folder_id}/children | jq
+
+# 復元（元の名前で）
+curl -s -b cookies_1.txt -X POST http://localhost:9090/api/trash/{id}/restore \
+  -H "Content-Type: application/json" \
+  -d '{}' | jq
+
+# 復元（別名で）
+curl -s -b cookies_1.txt -X POST http://localhost:9090/api/trash/{id}/restore \
+  -H "Content-Type: application/json" \
+  -d '{"new_name":"renamed.txt"}' | jq
+
+# 物理削除
+curl -s -b cookies_1.txt -X DELETE http://localhost:9090/api/trash/{id} | jq
+
+# 検索
+curl -s -b cookies_1.txt "http://localhost:9090/api/search?q=test" | jq
+
+# Dashboard
+curl -s -b cookies_1.txt http://localhost:9090/api/dashboard | jq
+
+```
+
+
+// ゴミ箱の中の子を取得
+curl -s -b cookies_1.txt http://localhost:9090/api/trash/e12669f1-6cfc-4101-9fe9-a638285740fa/children | jq
+
+// ゴミ箱移動
+curl -s -b cookies_1.txt -X DELETE http://localhost:9090/api/nodes/e12669f1-6cfc-4101-9fe9-a638285740fa | jq
+
+
+

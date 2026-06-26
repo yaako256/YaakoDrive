@@ -131,6 +131,7 @@ dependencies = [
  "sha2",
  "storage",
  "thiserror",
+ "tracing",
  "uuid",
 ]
 

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      DELETE\n      FROM nodes\n      WHERE id = ANY($1)\n      ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "UuidArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b93da2449a60757d9bab34aa64c40f2ee1755e7b1e84742eecbbb8bdeb8caca5"
+}
