@@ -17,6 +17,8 @@ name: yaakodrive-prod
 
 services:
   db:
+    container_name: yaakodrive_db
+
     environment:
       POSTGRES_DB: yaakodrive_prod
       # POSTGRES_PASSWORDは.env.prodのPOSTGRES_PASSWORDが使われる

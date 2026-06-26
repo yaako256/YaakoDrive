@@ -292,7 +292,7 @@ mod tests {
   use identity::UserId;
 
   // テスト用DBのURLを環境変数から取得するヘルパー
-  async fn test_pool() -> PgPool {
+  async fn _test_pool() -> PgPool {
     let url =
       std::env::var("DATABASE_URL").expect("DATABASE_URL must be set for integration tests");
     sqlx::PgPool::connect(&url)

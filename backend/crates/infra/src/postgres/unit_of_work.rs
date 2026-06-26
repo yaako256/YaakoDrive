@@ -10,48 +10,156 @@ use async_trait::async_trait;
 use sqlx::{PgPool, Postgres, Transaction};
 
 // 内部ライブラリ
+// Node型とファイル型
+use node::model::{FileContent, Node};
 // トレイト型
-use repository::{
-  FileContentRepository, NodeRepository, RefreshTokenRepository, RepoResult, TransactionContext,
-  UnitOfWork, UserRepository,
-};
-
-// 自クレート
-use crate::postgres::{
-  file_content_repository::PgFileContentRepository, node_repository::PgNodeRepository,
-  refresh_token_repository::PgRefreshTokenRepository, user_repository::PgUserRepository,
-};
+use repository::{RepoError, RepoResult, TransactionContext, UnitOfWork};
 
 // pgのトラジェクション定義
 pub struct PgTransactionContext {
-  //tx: Transaction<'static, Postgres>,
-  pub tx: Transaction<'static, Postgres>,
-  pool: PgPool,
+  tx: Transaction<'static, Postgres>,
 }
 
 #[async_trait]
 impl TransactionContext for PgTransactionContext {
-  // Pool経由のRepositoryをそのまま返す
-  // アップロードのような複合操作はapp層でtx直接操作する
-  fn users(&self) -> &dyn UserRepository {
-    // トランザクション内のRepositoryはStep 6で実装する
-    // ここでは一旦コンパイルが通る形にしておく
-    // ↓
-    // ライフタイムの都合上、Poolベースのものを返す
-    // Phase 9のアップロード実装時に必要なら再検討する？
-    todo!("Phase 9で必要になったら実装する")
+  async fn insert_node(&mut self, node: &Node) -> RepoResult<()> {
+    // 新規Node行を作成
+    sqlx::query!(
+      r#"
+      INSERT INTO nodes (
+        id,
+        owner_user_id,
+        parent_id,
+        name,
+        node_type,
+        status,
+        deleted_at,
+        created_at,
+        updated_at
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      "#,
+      node.id.as_uuid(),
+      node.owner_user_id.as_uuid(),
+      node.parent_id.as_ref().map(|id| *id.as_uuid()),
+      node.name,
+      node.node_type.as_str(),
+      node.status.as_str(),
+      node.deleted_at,
+      node.created_at,
+      node.updated_at,
+    )
+    .execute(&mut *self.tx)
+    .await
+    .map_err(|e| {
+      // UNIQUE制約違反を Conflict に変換する
+      if let sqlx::Error::Database(ref db_err) = e {
+        if db_err.code().as_deref() == Some("23505") {
+          return RepoError::Conflict("name already exists".to_string());
+        }
+      }
+      RepoError::Database(e.to_string())
+    })?;
+
+    Ok(())
   }
 
-  fn refresh_tokens(&self) -> &dyn RefreshTokenRepository {
-    todo!()
+  async fn update_node(&mut self, node: &Node) -> RepoResult<()> {
+    // 対象idのNode情報を更新する
+    // 確認のために更新件数を取得
+    let affected = sqlx::query!(
+      r#"
+      UPDATE nodes SET
+        parent_id  = $2,
+        name       = $3,
+        status     = $4,
+        deleted_at = $5,
+        updated_at = $6
+      WHERE
+        id = $1
+      "#,
+      node.id.as_uuid(),
+      node.parent_id.as_ref().map(|id| *id.as_uuid()),
+      node.name,
+      node.status.as_str(),
+      node.deleted_at,
+      node.updated_at,
+    )
+    .execute(&mut *self.tx)
+    .await
+    .map_err(|e| RepoError::Database(e.to_string()))?
+    .rows_affected();
+
+    // 取得失敗したらNotFoundエラー
+    if affected == 0 {
+      return Err(RepoError::NotFound);
+    }
+
+    Ok(())
   }
 
-  fn nodes(&self) -> &dyn NodeRepository {
-    todo!()
+  async fn insert_file_content(&mut self, content: &FileContent) -> RepoResult<()> {
+    // FileContentの新規行の作成
+    sqlx::query!(
+      r#"
+      INSERT INTO file_contents (
+        node_id,
+        stored_filename,
+        mime_type,
+        size_bytes,
+        status,
+        created_at,
+        updated_at
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      "#,
+      content.node_id.as_uuid(),
+      content.stored_filename,
+      content.mime_type,
+      content.size_bytes,
+      content.status.as_str(),
+      content.created_at,
+      content.updated_at,
+    )
+    .execute(&mut *self.tx)
+    .await
+    .map_err(|e| RepoError::Database(e.to_string()))?;
+
+    // sqlx::query!はPgQueryResult
+    // RepoResultとして返す
+    Ok(())
   }
 
-  fn file_contents(&self) -> &dyn FileContentRepository {
-    todo!()
+  async fn update_file_content(&mut self, content: &FileContent) -> RepoResult<()> {
+    // 対象NodeIdのFileContentを更新
+    // 確認のために更新件数を取得
+    let affected = sqlx::query!(
+      r#"
+      UPDATE file_contents SET
+        stored_filename = $2,
+        mime_type       = $3,
+        size_bytes      = $4,
+        status          = $5,
+        updated_at      = $6
+      WHERE node_id = $1
+      "#,
+      content.node_id.as_uuid(),
+      content.stored_filename,
+      content.mime_type,
+      content.size_bytes,
+      content.status.as_str(),
+      content.updated_at,
+    )
+    .execute(&mut *self.tx)
+    .await
+    .map_err(|e| RepoError::Database(e.to_string()))?
+    .rows_affected();
+
+    // 取得失敗したらNotFoundエラー
+    if affected == 0 {
+      return Err(RepoError::NotFound);
+    }
+    Ok(())
   }
 
   async fn commit(self: Box<Self>) -> RepoResult<()> {
@@ -59,7 +167,7 @@ impl TransactionContext for PgTransactionContext {
       .tx
       .commit()
       .await
-      .map_err(|e| repository::RepoError::Database(e.to_string()))
+      .map_err(|e| RepoError::Database(e.to_string()))
   }
 
   async fn rollback(self: Box<Self>) -> RepoResult<()> {
@@ -67,11 +175,10 @@ impl TransactionContext for PgTransactionContext {
       .tx
       .rollback()
       .await
-      .map_err(|e| repository::RepoError::Database(e.to_string()))
+      .map_err(|e| RepoError::Database(e.to_string()))
   }
 }
 
-/// pgのUnitOfWork
 pub struct PgUnitOfWork {
   pool: PgPool,
 }
@@ -85,14 +192,11 @@ impl PgUnitOfWork {
 #[async_trait]
 impl UnitOfWork for PgUnitOfWork {
   async fn begin(&self) -> RepoResult<Box<dyn TransactionContext>> {
-    /*
     let tx = self
       .pool
       .begin()
       .await
-      .map_err(|e| repository::RepoError::Database(e.to_string()))?;
+      .map_err(|e| RepoError::Database(e.to_string()))?;
     Ok(Box::new(PgTransactionContext { tx }))
-     */
-    todo!()
   }
 }

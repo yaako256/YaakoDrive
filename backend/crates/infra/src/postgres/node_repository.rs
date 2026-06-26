@@ -241,22 +241,22 @@ impl PgNodeRepository {
       .collect()
   }
 
-  /// 新規ノードを作成するcreateの内部実装
+  /// 新規ノードを作成するcreateの内部実装 $$$
   async fn create_impl(&self, node: &Node) -> InfraResult<()> {
     // 新規Node行を作成
     sqlx::query!(
       r#"
       INSERT INTO nodes (
-          id, 
-          owner_user_id, 
-          parent_id, 
-          name, 
-          node_type, 
-          status,
-          deleted_at,
-          created_at, 
-          updated_at
-          )
+        id, 
+        owner_user_id, 
+        parent_id, 
+        name, 
+        node_type, 
+        status,
+        deleted_at,
+        created_at, 
+        updated_at
+      )
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       "#,
       node.id.as_uuid(),
