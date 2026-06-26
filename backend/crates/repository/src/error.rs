@@ -21,6 +21,9 @@ pub enum RepoError {
 
   #[error("node error: {0}")]
   Node(String),
+
+  #[error("auth error: {0}")]
+  Auth(String),
 }
 
 /// repositoryクレートのリザルト

@@ -91,7 +91,7 @@ Restore
 # 特に着手したいリファクタリング点
 - もう少しNodeのドメインロジックを育てる → やった
 - NodeRepositoryをDashboardQueryServiceやQueryServiceに分ける(UseCase中心になってると思います。そのため、Query系（Dashboard・Search・Trash一覧など）をRepositoryから切り出す処理はこの後リファクタリングしようと思う)
-
+- まだ通常ユーザを作成するユースケースなくね？
 
 
 
@@ -113,3 +113,7 @@ NodeRow型を作成してquery_asにした。これにより、node_repository.r
 ## Nodeのドメインロジックを育てる
 Node型に、rename()やmove_to()を作り、ドメインロジックを育てた。それに伴い、UseCaseやhandlerがリファクタリングされた。
 また、ドメイン情報をすべてprivateにし、ゲッタ関数を作成して、保守性を高めた
+
+## User型のドメインロジックを育てた
+User型にnew_userやnew_adminを作り、ユーザ名やパスワードのバリテーションも追加した。
+create_adminのユースケースが簡単化された。

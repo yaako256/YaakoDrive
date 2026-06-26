@@ -3,19 +3,14 @@ backend/crates/app/src/usecase/auth/login.rs
 ログインのユースケース
 */
 
-// 外部クレート
-use chrono::{Duration, Utc};
-
 // 内部ライブラリ
 use auth::{
   jwt::JwtService, model::RefreshToken, password::verify_password, token::generate_refresh_token,
 };
-use identity::RefreshTokenId;
 use repository::{RefreshTokenRepository, UserRepository};
 
 // 自クレート
 use crate::error::{AppError, AppResult};
-use crate::usecase::auth::hash_token;
 
 // ログイン認証の入力
 pub struct LoginInput {
@@ -69,32 +64,23 @@ impl<'a> LoginUseCase<'a> {
     }
 
     // パスワード検証
-    verify_password(&input.password, &user.password_hash)?;
+    verify_password(&input.password, user.password_hash())?;
 
     // Access Token生成
     let access_token = self
       .jwt_service
-      .generate_access_token(&user.id, user.role.as_str())?;
+      .generate_access_token(user.id(), user.role().as_str())?;
 
     // Refresh Token生成
     let raw_token = generate_refresh_token();
-    let token_hash = hash_token(&raw_token);
-
-    // 現在時刻取得
-    let now = Utc::now();
-    // 失効時間を設定
-    let expires_at = now + Duration::seconds(input.refresh_token_expires_secs as i64);
 
     // RefreshToken型を作成
-    let refresh_token = RefreshToken {
-      id: RefreshTokenId::new(),
-      user_id: user.id,
-      token_hash,
-      user_agent: input.user_agent,
-      expires_at,
-      created_at: now,
-      revoked_at: None,
-    };
+    let refresh_token = RefreshToken::new(
+      *user.id(),
+      raw_token.clone(),
+      input.user_agent,
+      input.refresh_token_expires_secs,
+    );
 
     // DBに保存
     self.refresh_token_repo.create(&refresh_token).await?;

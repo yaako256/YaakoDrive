@@ -53,6 +53,7 @@ impl From<repository::RepoError> for AppError {
       repository::RepoError::Conflict(msg) => AppError::AlreadyExists(msg),
       repository::RepoError::Database(msg) => AppError::Repository(msg),
       repository::RepoError::Node(msg) => AppError::Node(msg),
+      repository::RepoError::Auth(msg) => AppError::Auth(msg),
     }
   }
 }

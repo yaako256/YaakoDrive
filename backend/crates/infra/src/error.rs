@@ -26,6 +26,9 @@ pub enum InfraError {
   #[error("node error: {0}")]
   Node(String),
 
+  #[error("auth error: {0}")]
+  Auth(String),
+
   #[error("invalid data: {0}")]
   InvalidData(String),
 }
@@ -41,6 +44,8 @@ impl From<InfraError> for RepoError {
       InfraError::InvalidData(msg) => RepoError::Database(msg),
       // Nodeエラー
       InfraError::Node(msg) => RepoError::Node(msg),
+      // Authエラー
+      InfraError::Auth(msg) => RepoError::Auth(msg),
     }
   }
 }
@@ -55,6 +60,13 @@ impl From<String> for InfraError {
 impl From<node::NodeError> for InfraError {
   fn from(e: node::NodeError) -> Self {
     InfraError::Node(e.to_string())
+  }
+}
+
+// AuthError → InfraError
+impl From<auth::AuthError> for InfraError {
+  fn from(e: auth::AuthError) -> Self {
+    InfraError::Auth(e.to_string())
   }
 }
 

@@ -128,7 +128,6 @@ dependencies = [
  "mime_guess",
  "node",
  "repository",
- "sha2",
  "storage",
  "thiserror",
  "tracing",
@@ -190,6 +189,7 @@ dependencies = [
  "jsonwebtoken",
  "rand",
  "serde",
+ "sha2",
  "thiserror",
  "uuid",
 ]

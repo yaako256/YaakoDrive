@@ -22,6 +22,9 @@ pub enum AuthError {
   #[error("password hash error: {0}")]
   HashError(String),
 
+  #[error("unknown role: {0}")]
+  InvalidRole(String),
+
   #[error("invalid username: {0}")]
   InvalidUsername(String),
 

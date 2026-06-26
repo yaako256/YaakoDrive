@@ -20,7 +20,3 @@ uuid       = { workspace = true }
 bytes = { workspace = true }
 mime_guess = { workspace = true }
 tracing = { workspace = true }
-
-# 固有クレート
-# 通常ハッシュ化用
-sha2 = "0.10"
