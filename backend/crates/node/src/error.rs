@@ -13,21 +13,25 @@ pub enum NodeError {
   #[error("node not found")]
   NotFound,
 
-  //#[error("name already exists in this folder")]
-  //NameConflict,
+  #[error("a node with the same name already exists in the destination folder")]
+  MoveConflict,
 
-  //#[error("cannot move folder into its own descendant")]
-  //CircularMove,
-  #[error("unknown node_type: {0}")]
+  #[error("cannot move a folder into its own descendant")]
+  CircularMove,
+
+  #[error("unknown node type: {0}")]
   UnknownNodeType(String),
 
-  #[error("unknown status: {0}")]
+  #[error("unknown node status: {0}")]
   UnknownStatus(String),
 
   #[error("invalid name: {0}")]
   InvalidName(String),
 
-  #[error("operation not allowed on deleted node")]
+  #[error("node is already active")]
+  AlreadyActive,
+
+  #[error("node is already deleted")]
   AlreadyDeleted,
 }
 

@@ -89,8 +89,8 @@ Restore
 
 
 # 特に着手したいリファクタリング点
-- もう少しNodeのドメインロジックを育てる
-- NodeRepositoryをDashboardQueryServiceやQueryServiceに分ける
+- もう少しNodeのドメインロジックを育てる → やった
+- NodeRepositoryをDashboardQueryServiceやQueryServiceに分ける(UseCase中心になってると思います。そのため、Query系（Dashboard・Search・Trash一覧など）をRepositoryから切り出す処理はこの後リファクタリングしようと思う)
 
 
 

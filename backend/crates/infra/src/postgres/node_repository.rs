@@ -11,12 +11,16 @@ use uuid::Uuid;
 
 // 内部ライブラリ
 use identity::{NodeId, UserId};
-use node::model::{Node, NodeRow};
+use node::model::Node;
 use repository::{NodeRepository, RepoError, RepoResult};
 
 // 自クレート
 // エラー型伝搬用
 use crate::error::{InfraError, InfraResult};
+use crate::postgres::node_row::NodeRow;
+
+// Postgres Error Codeの定義
+const UNIQUE_VIOLATION: &str = "23505";
 
 /// postgreSQLのNodeRepository実装
 pub struct PgNodeRepository {
@@ -293,7 +297,7 @@ impl PgNodeRepository {
     Ok(node)
   }
 
-  /// 新規ノードを作成するcreateの内部実装 $$$
+  /// 新規ノードを作成するcreateの内部実装
   async fn create_impl(&self, node: &Node) -> InfraResult<()> {
     // 新規Node行を作成
     sqlx::query!(
@@ -326,7 +330,7 @@ impl PgNodeRepository {
     .map_err(|e| {
       // UNIQUE制約違反を Conflict に変換する
       if let sqlx::Error::Database(ref db_err) = e {
-        if db_err.code().as_deref() == Some("23505") {
+        if db_err.code().as_deref() == Some(UNIQUE_VIOLATION) {
           return InfraError::Conflict("name already exists".to_string());
         }
       }
