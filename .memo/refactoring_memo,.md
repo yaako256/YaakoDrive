@@ -69,9 +69,47 @@ impl TryFrom<&str> for NodeStatus {
 これは少し違和感があるかもしれない。例えばAlreadyDeletedがあります。でもNode自身にdelete()がありません。つまりエラーだけある。これはUseCaseにロジックがある可能性があります。私はNodeErrorはNodeのメソッドから返ってきてほしいかもしれない。
 
 
+## NodeRepository
+### 肥大化の初期衝動について
+DashboardQueryServiceやQueryServiceを分けて、別々に管理してもいいかもしれない。
+RepositoryがNodeRepositoryという名前なのにやっている仕事が
+```
+CRUD
+検索
+Dashboard
+Tree
+Trash
+Restore
+```
+のように全部になっている。つまりAggregate RepositoryではなくNodeに関する全DBアクセス窓口になっています。
+
+
+
+
+
+
+# 特に着手したいリファクタリング点
+- もう少しNodeのドメインロジックを育てる
+- NodeRepositoryをDashboardQueryServiceやQueryServiceに分ける
+
+
+
+
+
+
+
+
+
 
 
 # 実際にすでにリファクタリングした箇所
 ## validate_name() を node crateへ移動
 validate_name()を`node/name.rs`に移動し、Nodeにrename()を追加した。
 これにより、ドメインルールをNodeへ寄せれた。
+
+## NodeRow型を作成してquery_asに
+NodeRow型を作成してquery_asにした。これにより、node_repository.rsが少し整理された。
+
+## Nodeのドメインロジックを育てる
+node_repository.rsで、update()が行われると、他のパラメータまで全部更新している。
+でもrenameならupdated_atだけ更新とかにすべきである。

@@ -18,6 +18,12 @@ pub enum NodeError {
 
   //#[error("cannot move folder into its own descendant")]
   //CircularMove,
+  #[error("unknown node_type: {0}")]
+  UnknownNodeType(String),
+
+  #[error("unknown status: {0}")]
+  UnknownStatus(String),
+
   #[error("invalid name: {0}")]
   InvalidName(String),
 

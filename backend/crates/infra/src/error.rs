@@ -23,6 +23,9 @@ pub enum InfraError {
   #[error("conflict: {0}")]
   Conflict(String),
 
+  #[error("node error: {0}")]
+  Node(String),
+
   #[error("invalid data: {0}")]
   InvalidData(String),
 }
@@ -36,6 +39,8 @@ impl From<InfraError> for RepoError {
       InfraError::Database(e) => RepoError::Database(e.to_string()),
       // DBから不正な値が来た＝DBエラーとして扱う
       InfraError::InvalidData(msg) => RepoError::Database(msg),
+      // Nodeエラー
+      InfraError::Node(msg) => RepoError::Node(msg),
     }
   }
 }
@@ -43,6 +48,13 @@ impl From<InfraError> for RepoError {
 impl From<String> for InfraError {
   fn from(e: String) -> Self {
     InfraError::InvalidData(e)
+  }
+}
+
+// NodeError → InfraError
+impl From<node::NodeError> for InfraError {
+  fn from(e: node::NodeError) -> Self {
+    InfraError::Node(e.to_string())
   }
 }
 

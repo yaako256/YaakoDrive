@@ -11,7 +11,7 @@ use uuid::Uuid;
 
 // 内部ライブラリ
 use identity::{NodeId, UserId};
-use node::model::{Node, NodeStatus, NodeType};
+use node::model::{Node, NodeRow};
 use repository::{NodeRepository, RepoError, RepoResult};
 
 // 自クレート
@@ -175,7 +175,8 @@ impl PgNodeRepository {
   async fn find_by_id_impl(&self, id: &NodeId) -> InfraResult<Option<Node>> {
     // sqlx::query! → コンパイル時にSQLを検証し、"匿名構造体（Record）" を生成する
     // Node列からNodeidが一致するものを持ってくる
-    let row = sqlx::query!(
+    let row = sqlx::query_as!(
+      NodeRow,
       r#"
       SELECT 
         id, 
@@ -200,22 +201,12 @@ impl PgNodeRepository {
     .fetch_optional(&self.pool)
     .await?;
 
-    // 匿名構造体(record)をNode型に変換
-    row
-      .map(|r| {
-        map_node_row(
-          r.id,
-          r.owner_user_id,
-          r.parent_id,
-          r.name,
-          r.node_type,
-          r.status,
-          r.deleted_at,
-          r.created_at,
-          r.updated_at,
-        )
-      })
-      .transpose()
+    // query_asで得たNodeRow型ををNode型に変換
+    // ここで NodeError → InfraError に変換される
+    let node = row.map(Node::try_from).transpose()?;
+
+    // InfraResultで返す
+    Ok(node)
   }
 
   // 親idから子のリストをVec<Node>で返すlist_children_implの内部実装
@@ -226,100 +217,80 @@ impl PgNodeRepository {
   ) -> InfraResult<Vec<Node>> {
     // 匿名構造体が別構造体と考えられる結果、
     // matchが使えないのでif文でparent_id分岐をする
-    if let Some(pid) = parent_id {
-      let rows = sqlx::query!(
-        r#"
-        SELECT 
-          id, 
-          owner_user_id, 
-          parent_id, 
-          name, 
-          node_type, 
-          status, 
-          deleted_at, 
-          created_at, 
-          updated_at
-        FROM
-          nodes
-        WHERE
-          owner_user_id = $1 
-          AND parent_id = $2
-          AND deleted_at IS NULL
-          AND status = 'active'
-        ORDER BY
-          node_type DESC,
-          name ASC
-        "#,
-        owner_user_id.as_uuid(),
-        pid.as_uuid()
-      )
-      .fetch_all(&self.pool)
-      .await?;
-
-      // 匿名構造体(record)をNode型に変換
-      return rows
-        .into_iter()
-        .map(|r| {
-          map_node_row(
-            r.id,
-            r.owner_user_id,
-            r.parent_id,
-            r.name,
-            r.node_type,
-            r.status,
-            r.deleted_at,
-            r.created_at,
-            r.updated_at,
-          )
-        })
-        .collect();
-    }
-
-    let rows = sqlx::query!(
-      r#"
-      SELECT 
-        id, 
-        owner_user_id, 
-        parent_id, 
-        name, 
-        node_type, 
-        status, 
-        deleted_at, 
-        created_at, 
-        updated_at
-      FROM
-        nodes
-      WHERE
-        owner_user_id = $1 
-        AND parent_id IS NULL 
-        AND deleted_at IS NULL 
-        AND status = 'active' 
-      ORDER BY
-        node_type DESC,
-        name ASC
-      "#,
-      owner_user_id.as_uuid()
-    )
-    .fetch_all(&self.pool)
-    .await?;
-
-    // 匿名構造体(record)をNode型に変換
-    rows
-      .into_iter()
-      .map(|r| {
-        map_node_row(
-          r.id,
-          r.owner_user_id,
-          r.parent_id,
-          r.name,
-          r.node_type,
-          r.status,
-          r.deleted_at,
-          r.created_at,
-          r.updated_at,
+    // → query_as! により両方とも Vec<NodeRow> を返すため、matchで分岐できるようになった
+    // PostgreSQLなら、SQL構文でSQLを1本にもできるらしい。
+    let rows = match parent_id {
+      Some(pid) => {
+        sqlx::query_as!(
+          NodeRow,
+          r#"
+          SELECT 
+            id, 
+            owner_user_id, 
+            parent_id, 
+            name, 
+            node_type, 
+            status, 
+            deleted_at, 
+            created_at, 
+            updated_at
+          FROM
+            nodes
+          WHERE
+            owner_user_id = $1 
+            AND parent_id = $2
+            AND deleted_at IS NULL
+            AND status = 'active'
+          ORDER BY
+            node_type DESC,
+            name ASC
+          "#,
+          owner_user_id.as_uuid(),
+          pid.as_uuid()
         )
-      })
-      .collect()
+        .fetch_all(&self.pool)
+        .await?
+      }
+      None => {
+        sqlx::query_as!(
+          NodeRow,
+          r#"
+          SELECT 
+            id, 
+            owner_user_id, 
+            parent_id, 
+            name, 
+            node_type, 
+            status, 
+            deleted_at, 
+            created_at, 
+            updated_at
+          FROM
+            nodes
+          WHERE
+            owner_user_id = $1 
+            AND parent_id IS NULL 
+            AND deleted_at IS NULL 
+            AND status = 'active' 
+          ORDER BY
+            node_type DESC,
+            name ASC
+          "#,
+          owner_user_id.as_uuid()
+        )
+        .fetch_all(&self.pool)
+        .await?
+      }
+    };
+
+    // query_asで得たNodeRow型ををNode型に変換
+    let node = rows
+      .into_iter()
+      .map(Node::try_from)
+      .collect::<Result<Vec<_>, _>>()?;
+
+    // InfraResultで返す
+    Ok(node)
   }
 
   /// 新規ノードを作成するcreateの内部実装 $$$
@@ -491,13 +462,12 @@ impl PgNodeRepository {
     )
   }
 
-  // impl PgNodeRepository に追加
-
   async fn list_trash_roots_impl(&self, owner_user_id: &UserId) -> InfraResult<Vec<Node>> {
     // 「直接ゴミ箱に入れたノード」を取得する。
     // 削除されているが、親が active（deleted_at IS NULL）か、
     // 親がいない（parent_id IS NULL）ノードが対象。
-    let rows = sqlx::query!(
+    let rows = sqlx::query_as!(
+      NodeRow,
       r#"
       SELECT
         id,
@@ -528,22 +498,14 @@ impl PgNodeRepository {
     .fetch_all(&self.pool)
     .await?;
 
-    rows
+    // query_asで得たNodeRow型ををNode型に変換
+    let node = rows
       .into_iter()
-      .map(|r| {
-        map_node_row(
-          r.id,
-          r.owner_user_id,
-          r.parent_id,
-          r.name,
-          r.node_type,
-          r.status,
-          r.deleted_at,
-          r.created_at,
-          r.updated_at,
-        )
-      })
-      .collect()
+      .map(Node::try_from)
+      .collect::<Result<Vec<_>, _>>()?;
+
+    // InfraResultで返す
+    Ok(node)
   }
 
   async fn list_deleted_children_impl(
@@ -551,7 +513,8 @@ impl PgNodeRepository {
     owner_user_id: &UserId,
     parent_id: &NodeId,
   ) -> InfraResult<Vec<Node>> {
-    let rows = sqlx::query!(
+    let rows = sqlx::query_as!(
+      NodeRow,
       r#"
       SELECT
         id,
@@ -576,22 +539,14 @@ impl PgNodeRepository {
     .fetch_all(&self.pool)
     .await?;
 
-    rows
+    // query_asで得たNodeRow型ををNode型に変換
+    let node = rows
       .into_iter()
-      .map(|r| {
-        map_node_row(
-          r.id,
-          r.owner_user_id,
-          r.parent_id,
-          r.name,
-          r.node_type,
-          r.status,
-          r.deleted_at,
-          r.created_at,
-          r.updated_at,
-        )
-      })
-      .collect()
+      .map(Node::try_from)
+      .collect::<Result<Vec<_>, _>>()?;
+
+    // InfraResultで返す
+    Ok(node)
   }
 
   async fn exists_active_with_name_impl(
@@ -661,7 +616,9 @@ impl PgNodeRepository {
     // ILIKE で大文字小文字を無視した部分一致検索。
     // 結果は最大 100 件に制限する。
     let pattern = format!("%{}%", query);
-    let rows = sqlx::query!(
+
+    let rows = sqlx::query_as!(
+      NodeRow,
       r#"
       SELECT
         id,
@@ -688,22 +645,14 @@ impl PgNodeRepository {
     .fetch_all(&self.pool)
     .await?;
 
-    rows
+    // query_asで得たNodeRow型ををNode型に変換
+    let node = rows
       .into_iter()
-      .map(|r| {
-        map_node_row(
-          r.id,
-          r.owner_user_id,
-          r.parent_id,
-          r.name,
-          r.node_type,
-          r.status,
-          r.deleted_at,
-          r.created_at,
-          r.updated_at,
-        )
-      })
-      .collect()
+      .map(Node::try_from)
+      .collect::<Result<Vec<_>, _>>()?;
+
+    // InfraResultで返す
+    Ok(node)
   }
 
   async fn collect_descendant_ids_impl(&self, id: &NodeId) -> InfraResult<Vec<NodeId>> {
@@ -768,34 +717,4 @@ impl PgNodeRepository {
 
     Ok(row.count)
   }
-}
-
-/// 匿名構造体をNode型に変換する内部関数
-fn map_node_row(
-  id: Uuid,
-  owner_user_id: Uuid,
-  parent_id: Option<Uuid>,
-  name: String,
-  node_type: String,
-  status: String,
-  deleted_at: Option<DateTime<Utc>>,
-  created_at: DateTime<Utc>,
-  updated_at: DateTime<Utc>,
-) -> InfraResult<Node> {
-  // 文字列からEnum型へ変換
-  // 失敗時はエラー伝搬
-  let node_type = NodeType::try_from(node_type.as_str())?;
-  let status = NodeStatus::try_from(status.as_str())?;
-
-  Ok(Node {
-    id: NodeId::from_uuid(id),
-    owner_user_id: UserId::from_uuid(owner_user_id),
-    parent_id: parent_id.map(NodeId::from_uuid),
-    name,
-    node_type,
-    status,
-    deleted_at,
-    created_at,
-    updated_at,
-  })
 }

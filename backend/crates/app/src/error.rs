@@ -52,6 +52,7 @@ impl From<repository::RepoError> for AppError {
       repository::RepoError::NotFound => AppError::NotFound("resource".to_string()),
       repository::RepoError::Conflict(msg) => AppError::AlreadyExists(msg),
       repository::RepoError::Database(msg) => AppError::Repository(msg),
+      repository::RepoError::Node(msg) => AppError::Node(msg),
     }
   }
 }

@@ -1362,6 +1362,7 @@ dependencies = [
  "identity",
  "serde",
  "thiserror",
+ "uuid",
 ]
 
 [[package]]
