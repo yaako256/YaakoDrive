@@ -31,6 +31,9 @@ pub enum AppError {
   #[error("auth error: {0}")]
   Auth(String),
 
+  #[error("storage error: {0}")]
+  Storage(String),
+
   #[error("storage limit exceeded")]
   StorageLimitExceeded,
 }
@@ -54,5 +57,12 @@ impl From<repository::RepoError> for AppError {
 impl From<auth::AuthError> for AppError {
   fn from(e: auth::AuthError) -> Self {
     AppError::Auth(e.to_string())
+  }
+}
+
+// StorageError → AppError
+impl From<storage::StorageError> for AppError {
+  fn from(e: storage::StorageError) -> Self {
+    AppError::Storage(e.to_string())
   }
 }
