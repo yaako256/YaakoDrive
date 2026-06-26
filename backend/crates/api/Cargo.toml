@@ -12,6 +12,7 @@ identity = { path = "../identity" }
 infra = { path = "../infra" }
 repository = { path = "../repository" }
 node = { path = "../node" }
+storage = { path = "../storage" }
 
 # workspace共通外部クレート
 axum = { workspace = true }
@@ -22,6 +23,8 @@ tracing = { workspace = true }
 thiserror = { workspace = true }
 chrono = { workspace = true }
 uuid = { workspace = true }
+bytes = { workspace = true }
+futures-util  = { workspace = true }
 
 # 固有クレート
 # Cookie取得用
@@ -30,3 +33,6 @@ axum-extra = { version = "0.10", features = ["cookie"] }
 # Cookie関連で使う時間型
 # 標準ライブラリやchronoは型が異なり使えない
 time = "0.3"
+
+# わからん
+urlencoding  = "2"

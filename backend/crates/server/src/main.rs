@@ -18,12 +18,15 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use tracing::info;
 
 // 内部ライブラリ
+use api::download_token::DownloadTokenStore;
 use api::state::AppState;
 use auth::jwt::JwtService;
 use infra::postgres::{
-  db::create_pool, node_repository::PgNodeRepository,
-  refresh_token_repository::PgRefreshTokenRepository, user_repository::PgUserRepository,
+  db::create_pool, file_content_repository::PgFileContentRepository,
+  node_repository::PgNodeRepository, refresh_token_repository::PgRefreshTokenRepository,
+  unit_of_work::PgUnitOfWork, user_repository::PgUserRepository,
 };
+use storage::local::LocalStorageService;
 
 // 自クレート
 mod error;
@@ -70,6 +73,9 @@ async fn run() -> ServerResult<()> {
     config.jwt.access_token_expires_secs,
   ));
 
+  // storageの組み立て
+  let storage = LocalStorageService::new(&config.storage.data_dir).map_err(ServerError::Io)?;
+
   // AppStateの作成
   let state = AppState {
     config: Arc::new(config.clone()),
@@ -77,6 +83,10 @@ async fn run() -> ServerResult<()> {
     user_repo: Arc::new(PgUserRepository::new(pool.clone())),
     refresh_token_repo: Arc::new(PgRefreshTokenRepository::new(pool.clone())),
     node_repo: Arc::new(PgNodeRepository::new(pool.clone())),
+    file_content_repo: Arc::new(PgFileContentRepository::new(pool.clone())),
+    uow: Arc::new(PgUnitOfWork::new(pool.clone())),
+    storage: Arc::new(storage),
+    download_tokens: DownloadTokenStore::new(),
   };
 
   info!("Starting YaakoDrive server");

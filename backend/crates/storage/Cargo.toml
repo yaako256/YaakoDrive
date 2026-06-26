@@ -11,11 +11,11 @@ async-trait = { workspace = true }
 uuid       = { workspace = true }
 tracing    = { workspace = true }
 bytes = { workspace = true }
+futures-util  = { workspace = true }
 
 # 固有クレート
 # tokioの非同期I/O(ストリーム)用
 tokio-util   = { version = "0.7", features = ["io"] }
 # 非同期処理の定義集用
 futures-core = "0.3"
-# futureの追加コンテンツ
-futures-util = "0.3"
+

@@ -3,26 +3,26 @@ backend/crates/api/src/download_token.rs
 ダウンロードトークン管理
 MVPではサーバメモリ上で管理
 */
-use identity::NodeId;
+// api/src/download_token.rs
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
+
+use identity::NodeId;
 use uuid::Uuid;
 
-/// ダウンロードトークンの有効期限
-const TOKEN_TTL_SECS: u64 = 60;
+const TTL_SECS: u64 = 60;
 
-#[derive(Clone)]
-struct TokenEntry {
+struct Entry {
   node_id: NodeId,
   expires_at: Instant,
 }
 
-/// メモリ上のダウンロードトークンストア
-/// サーバ再起動で失効する。MVP向け。
+/// メモリ上のダウンロードトークンストア。
+/// MVP では単一インスタンス前提のためサーバ再起動で失効する。
 #[derive(Clone, Default)]
 pub struct DownloadTokenStore {
-  inner: Arc<Mutex<HashMap<String, TokenEntry>>>,
+  inner: Arc<Mutex<HashMap<String, Entry>>>,
 }
 
 impl DownloadTokenStore {
@@ -30,26 +30,22 @@ impl DownloadTokenStore {
     Self::default()
   }
 
-  /// トークンを発行してNodeIdに紐付ける
+  /// NodeId に紐付いたトークンを発行する
   pub fn issue(&self, node_id: NodeId) -> String {
     let token = Uuid::new_v4().to_string();
-    let entry = TokenEntry {
-      node_id,
-      expires_at: Instant::now() + Duration::from_secs(TOKEN_TTL_SECS),
-    };
-    self.inner.lock().unwrap().insert(token.clone(), entry);
+    self.inner.lock().unwrap().insert(
+      token.clone(),
+      Entry {
+        node_id,
+        expires_at: Instant::now() + Duration::from_secs(TTL_SECS),
+      },
+    );
     token
   }
 
-  /// トークンを検証してNodeIdを返す
-  /// 検証後はトークンを削除する（使い捨て）
+  /// トークンを検証して NodeId を返す（使い捨て）
   pub fn consume(&self, token: &str) -> Option<NodeId> {
-    let mut map = self.inner.lock().unwrap();
-    let entry = map.remove(token)?;
-    if entry.expires_at > Instant::now() {
-      Some(entry.node_id)
-    } else {
-      None
-    }
+    let entry = self.inner.lock().unwrap().remove(token)?;
+    (entry.expires_at > Instant::now()).then_some(entry.node_id)
   }
 }

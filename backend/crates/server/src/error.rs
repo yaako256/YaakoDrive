@@ -21,6 +21,9 @@ pub enum ServerError {
   #[error("DBエラー: {0}")]
   Database(#[from] sqlx::Error),
 
+  #[error("storageエラー: {0}")]
+  Io(#[from] storage::StorageError),
+
   // axumは標準のstd::ioのエラー
   // axum以外でこのエラーが出ないため、そのまま使う
   #[error("axumエラー: {0}")]

@@ -3,38 +3,6 @@ backend/crates/api/src/handlers/node.rs
 Node関連のハンドラ
 */
 
-// ─── レスポンス型定義 ──────────────────────────────────────
-
-// 外部クレート
-use chrono::{DateTime, Utc};
-use serde::Serialize;
-
-// 内部ライブラリ
-use node::model::Node;
-
-#[derive(Serialize)]
-pub struct NodeResponse {
-  pub id: String,
-  pub parent_id: Option<String>,
-  pub name: String,
-  pub node_type: String,
-  pub created_at: DateTime<Utc>,
-  pub updated_at: DateTime<Utc>,
-}
-
-impl From<node::model::Node> for NodeResponse {
-  fn from(n: Node) -> Self {
-    Self {
-      id: n.id.to_string(),
-      parent_id: n.parent_id.map(|id| id.to_string()),
-      name: n.name,
-      node_type: n.node_type.as_str().to_string(),
-      created_at: n.created_at,
-      updated_at: n.updated_at,
-    }
-  }
-}
-
 // ─── ハントラの定義 ──────────────────────────────────────
 // 外部ライブラリ
 use axum::{
@@ -54,9 +22,10 @@ use app::usecase::node::{
   move_node::{MoveNodeInput, MoveNodeUseCase},
   rename_node::{RenameNodeInput, RenameNodeUseCase},
 };
-use identity::{NodeId, UserId};
+use identity::NodeId;
 
 // 自クレート
+use crate::handlers::common::{NodeResponse, parse_user_id};
 use crate::{
   error::ApiAppError, extractor::AuthenticatedUser, response::ApiResponse, state::AppState,
 };
@@ -285,14 +254,4 @@ pub async fn delete_node_handler(
 
   // 空のOkレスポンスを返す
   Ok(Json(ApiResponse::ok(())))
-}
-
-// ─── 内部関数 ─────────────────────────────────────────────
-/// 文字列idをUserId型に変換するヘルパー関数
-fn parse_user_id(sub: &str) -> Result<UserId, ApiAppError> {
-  // uuid(文字列)をUUID型にパースする
-  let uuid = Uuid::parse_str(sub).map_err(|_| ApiAppError::from(app::AppError::Unauthorized))?;
-
-  // uuidをUserId型にして返す
-  Ok(UserId::from_uuid(uuid))
 }
