@@ -5,13 +5,14 @@ serverクレートのエラー型の定義
 
 // 外部クレート
 // エラー型作成用
-use sqlx;
 use thiserror::Error;
+// 外部エラー型
+use sqlx;
 
 // 内部ライブラリ
 use config;
 
-/// Configクレートのエラー型
+/// Serverクレートのエラー型
 #[derive(Debug, Error)]
 pub enum ServerError {
   #[error("[config] {0}")]
@@ -26,5 +27,5 @@ pub enum ServerError {
   Axum(#[from] std::io::Error),
 }
 
-/// Configクレートのリザルト
+/// Serverクレートのリザルト
 pub(crate) type ServerResult<T> = Result<T, ServerError>;
