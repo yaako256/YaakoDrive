@@ -14,11 +14,16 @@ use axum::{
 // ハンドラ達
 use crate::handlers::{
   auth::{login_handler, logout_handler, refresh_handler},
+  dashboard::dashboard_handler,
   file::{download_handler, download_url_handler, upload_handler, upload_root_handler},
   health::health_handler,
   node::{
     create_folder_handler, create_root_folder_handler, delete_node_handler, get_node_handler,
     list_children_handler, list_root_handler, move_node_handler, rename_node_handler,
+  },
+  search::search_handler,
+  trash::{
+    hard_delete_node_handler, list_trash_children_handler, list_trash_handler, restore_node_handler,
   },
 };
 // AppState
@@ -48,6 +53,15 @@ pub fn create_router(state: AppState) -> Router {
     .route("/api/nodes/{id}/upload", post(upload_handler)) // 追加
     .route("/api/nodes/{id}/download-url", get(download_url_handler)) // 追加
     .route("/api/files/download/{token}", get(download_handler))
+    // trash
+    .route("/api/trash", get(list_trash_handler))
+    .route("/api/trash/{id}/children", get(list_trash_children_handler))
+    .route("/api/trash/{id}/restore", post(restore_node_handler))
+    .route("/api/trash/{id}", delete(hard_delete_node_handler))
+    // search
+    .route("/api/search", get(search_handler))
+    // dashboard
+    .route("/api/dashboard", get(dashboard_handler))
     // デフォルトだと2MBまでしか送信できないので、仮で制限をなくす
     .layer(axum::extract::DefaultBodyLimit::disable())
     // State管理
