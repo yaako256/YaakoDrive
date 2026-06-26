@@ -232,7 +232,7 @@ impl PgFileContentRepository {
     let totals = sqlx::query!(
       r#"
       SELECT
-        COALESCE(SUM(fc.size_bytes), 0) as "total_bytes!: i64",
+        COALESCE(SUM(fc.size_bytes)::BIGINT, 0) as "total_bytes!: i64",
         COUNT(fc.node_id)::BIGINT       as "file_count!: i64"
       FROM nodes n
       JOIN file_contents fc ON fc.node_id = n.id
