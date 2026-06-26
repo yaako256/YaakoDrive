@@ -15,7 +15,8 @@ use node::model::{FileContent, Node};
 // トレイト型
 use repository::{RepoError, RepoResult, TransactionContext, UnitOfWork};
 
-// pgのトラジェクション定義
+/// PostgreSQL トランザクションのコンテキスト。
+/// tx を所有したまま、各操作を直接 sqlx で実行する。
 pub struct PgTransactionContext {
   tx: Transaction<'static, Postgres>,
 }
@@ -141,7 +142,8 @@ impl TransactionContext for PgTransactionContext {
         size_bytes      = $4,
         status          = $5,
         updated_at      = $6
-      WHERE node_id = $1
+      WHERE
+        node_id = $1
       "#,
       content.node_id.as_uuid(),
       content.stored_filename,

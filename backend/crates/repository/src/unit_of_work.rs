@@ -7,14 +7,20 @@ UnitOfWorkのトレイトを定義
 // 外部クレート
 // 非同期トレイト
 use async_trait::async_trait;
+
+// 内部ライブラリ
 use node::model::{FileContent, Node};
 
 // 自クレート
 use crate::error::RepoResult;
 
-/// トランザクション内で必要な操作だけを定義する
-/// &dyn Repository を返す設計は自己参照問題で成立しないため、
-/// TransactionContext 自体がトランザクション操作のメソッドを持つ設計にする
+/// トランザクション内で必要な操作を直接メソッドとして定義する。
+///
+/// 設計上の理由:
+/// PgTransactionContext は Transaction<Postgres> を所有しており、
+/// そこへの参照を Repository に持たせると自己参照になりライフタイムが解決できない。
+/// そのため &dyn Repository を返す設計は採用せず、
+/// TransactionContext 自体が操作メソッドを持つ形にする。
 #[async_trait]
 pub trait TransactionContext: Send + Sync {
   // Node 操作
