@@ -6,7 +6,6 @@ nodeの型定義
 // 外部クレート
 // 時間型用
 use chrono::{DateTime, Utc};
-use uuid::Uuid;
 
 // 内部ライブラリ
 // Id型
@@ -101,7 +100,7 @@ impl Node {
     node_id: NodeId,
     owner_user_id: UserId,
     parent_id: Option<NodeId>,
-    filename: &str,
+    filename: String,
   ) -> NodeResult<Self> {
     // 名前の検証
     validate_name(&filename)?;
@@ -110,7 +109,7 @@ impl Node {
       id: node_id,
       owner_user_id: owner_user_id,
       parent_id: parent_id,
-      name: filename.to_string(),
+      name: filename,
       node_type: NodeType::File,
       status: NodeStatus::Pending,
       deleted_at: None,
@@ -180,7 +179,7 @@ impl Node {
     self.parent_id.as_ref()
   }
   /// nameのゲッター関数
-  pub fn name(&self) -> &str {
+  pub fn name(&self) -> &String {
     &self.name
   }
   /// statusのゲッター関数
@@ -258,7 +257,7 @@ impl Node {
     // 名前の検証
     validate_name(&new_name)?;
 
-    // 既に削除されているかチェック
+    // 削除済みのNodeはリネームできない
     if self.deleted_at.is_some() {
       return Err(NodeError::AlreadyDeleted);
     }
@@ -275,6 +274,11 @@ impl Node {
   /// 移動する
   // moveは予約語なので使えない
   pub fn move_node(&mut self, new_parent: Option<NodeId>, ancestors: &[NodeId]) -> NodeResult<()> {
+    // 削除済みのNodeは移動できない
+    if self.deleted_at.is_some() {
+      return Err(NodeError::AlreadyDeleted);
+    }
+
     // 祖先との循環を防ぐ
     if let Some(parent) = new_parent {
       if ancestors.contains(&parent) {
@@ -308,10 +312,15 @@ impl Node {
   }
 
   /// ゴミ箱から戻す
-  pub fn restore(&mut self) -> NodeResult<()> {
+  pub fn restore(&mut self, restore_name: Option<String>) -> NodeResult<()> {
     // 既に削除されているかのチェック
     if !self.is_deleted() {
       return Err(NodeError::AlreadyActive);
+    }
+
+    // 名前を更新する
+    if let Some(name) = restore_name {
+      self.name = name;
     }
 
     // deleted_atをNoneにする
@@ -354,19 +363,22 @@ impl FileContent {
   /// pendingで作成する
   pub fn new_file_content(
     node_id: NodeId,
+    stored_filename: String,
     mime_type: String,
     size_bytes: i64,
-    stored_filename: String,
-  ) -> Self {
-    Self {
+  ) -> NodeResult<Self> {
+    // 名前の検証
+    validate_name(&stored_filename)?;
+
+    Ok(Self {
       node_id: node_id,
-      stored_filename: stored_filename.clone(),
+      stored_filename: stored_filename,
       mime_type: mime_type,
       size_bytes: size_bytes,
       status: FileContentStatus::Pending,
       created_at: Utc::now(),
       updated_at: Utc::now(),
-    }
+    })
   }
 
   /// 匿名構造体等を復元するときとかに使う
