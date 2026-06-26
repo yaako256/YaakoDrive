@@ -29,12 +29,12 @@ pub struct NodeResponse {
 impl From<node::model::Node> for NodeResponse {
   fn from(n: Node) -> Self {
     Self {
-      id: n.id.to_string(),
-      parent_id: n.parent_id.map(|id| id.to_string()),
-      name: n.name,
-      node_type: n.node_type.as_str().to_string(),
-      created_at: n.created_at,
-      updated_at: n.updated_at,
+      id: n.id().to_string(),
+      parent_id: n.parent_id().map(|id| id.to_string()),
+      name: n.name().to_string(),
+      node_type: n.node_type().as_str().to_string(),
+      created_at: n.created_at(),
+      updated_at: n.updated_at(),
     }
   }
 }

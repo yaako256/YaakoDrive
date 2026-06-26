@@ -312,15 +312,10 @@ impl Node {
   }
 
   /// ゴミ箱から戻す
-  pub fn restore(&mut self, restore_name: Option<String>) -> NodeResult<()> {
+  pub fn restore(&mut self) -> NodeResult<()> {
     // 既に削除されているかのチェック
     if !self.is_deleted() {
       return Err(NodeError::AlreadyActive);
-    }
-
-    // 名前を更新する
-    if let Some(name) = restore_name {
-      self.name = name;
     }
 
     // deleted_atをNoneにする

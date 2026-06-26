@@ -169,7 +169,7 @@ pub async fn download_handler(
 
   let stream = state
     .storage
-    .open_stream(&content.stored_filename)
+    .open_stream(&content.stored_filename())
     .await
     .map_err(|e| ApiAppError::from(app::AppError::from(e)))?;
 
@@ -177,11 +177,11 @@ pub async fn download_handler(
     stream.map(|r| r.map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))),
   );
 
-  let filename_encoded = urlencoding::encode(&node.name).to_string();
+  let filename_encoded = urlencoding::encode(&node.name()).to_string();
 
   Ok((
     [
-      (header::CONTENT_TYPE, content.mime_type),
+      (header::CONTENT_TYPE, content.mime_type().to_string()),
       (
         header::CONTENT_DISPOSITION,
         format!("attachment; filename*=UTF-8''{}", filename_encoded),

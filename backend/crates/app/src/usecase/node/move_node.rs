@@ -4,9 +4,6 @@ backend/crates/app/src/usecase/node/move_node.rs
 移動時の循環チェックが重要。絶対に子孫には移動させない。
 */
 
-// 外部クレート
-use chrono::Utc;
-
 // 内部ライブラリ
 use identity::{NodeId, UserId};
 use node::model::Node;

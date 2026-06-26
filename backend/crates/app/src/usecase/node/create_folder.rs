@@ -6,7 +6,6 @@ backend/crates/app/src/usecase/node/create_folder.rs
 // 内部ライブラリ
 use identity::{NodeId, UserId};
 use node::model::Node;
-use node::name::validate_name;
 use repository::NodeRepository;
 
 // 自クレート
@@ -58,7 +57,7 @@ impl<'a> CreateFolderUseCase<'a> {
     // 新規フォルダのNode型を作成(一旦pending)
     let mut node = Node::new_folder(input.owner_user_id, input.parent_id, input.name)?;
     // Activeにする
-    node.activate();
+    node.activate()?;
 
     // 実際に作成
     self.node_repo.create(&node).await.map_err(|e| {

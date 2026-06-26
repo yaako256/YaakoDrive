@@ -3,9 +3,6 @@ backend/crates/app/src/usecase/node/delete_node.rs
 フォルダやファイルを削除(論理削除)をするユースケース
 */
 
-// 外部クレート
-use chrono::Utc;
-
 // 内部ライブラリ
 use identity::{NodeId, UserId};
 use repository::NodeRepository;

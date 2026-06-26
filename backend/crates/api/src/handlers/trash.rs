@@ -66,7 +66,7 @@ pub async fn list_trash_children_handler(
     .map_err(|e| ApiAppError::from(app::AppError::from(e)))?
     .ok_or_else(|| ApiAppError::from(app::AppError::NotFound("node not found".to_string())))?;
 
-  if parent.owner_user_id != user_id {
+  if parent.owner_user_id() != &user_id {
     return Err(ApiAppError::from(app::AppError::NotFound(
       "node not found".to_string(),
     )));
