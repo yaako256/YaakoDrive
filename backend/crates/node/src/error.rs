@@ -13,12 +13,11 @@ pub enum NodeError {
   #[error("node not found")]
   NotFound,
 
-  #[error("name already exists in this folder")]
-  NameConflict,
+  //#[error("name already exists in this folder")]
+  //NameConflict,
 
-  #[error("cannot move folder into its own descendant")]
-  CircularMove,
-
+  //#[error("cannot move folder into its own descendant")]
+  //CircularMove,
   #[error("invalid name: {0}")]
   InvalidName(String),
 
@@ -27,5 +26,4 @@ pub enum NodeError {
 }
 
 // nodeクレートのリザルト
-// 現状未使用のためコメントアウト
 pub type NodeResult<T> = Result<T, NodeError>;

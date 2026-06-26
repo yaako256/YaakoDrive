@@ -47,7 +47,7 @@ impl<'a> RenameNodeUseCase<'a> {
     }
 
     // 名前を更新
-    node.rename(input.new_name);
+    node.rename(input.new_name)?;
 
     // Nodeの更新(リネームの実行)
     self.node_repo.update(&node).await.map_err(|e| match e {
