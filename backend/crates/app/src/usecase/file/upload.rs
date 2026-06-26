@@ -72,12 +72,15 @@ impl<'a> UploadFileUseCase<'a> {
         .await?
         .ok_or_else(|| AppError::NotFound("parent folder not found".to_string()))?;
 
-      if parent.owner_user_id() != &owner_user_id {
+      // 自分のフォルダじゃなかったらエラー
+      if !parent.is_owner(&owner_user_id) {
         return Err(AppError::NotFound("parent folder not found".to_string()));
       }
+      // 削除済みならエラー
       if parent.is_deleted() {
         return Err(AppError::NotFound("parent folder not found".to_string()));
       }
+      // フォルダじゃなかったらエラー
       if !parent.is_folder() {
         return Err(AppError::InvalidInput("parent is not a folder".to_string()));
       }
