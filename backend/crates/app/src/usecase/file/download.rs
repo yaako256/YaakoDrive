@@ -44,7 +44,7 @@ impl<'a> GetDownloadInfoUseCase<'a> {
       .await?
       .ok_or_else(|| AppError::NotFound("node not found".to_string()))?;
 
-    if node.owner_user_id != input.requester_user_id {
+    if node.owner_user_id() != &input.requester_user_id {
       return Err(AppError::NotFound("node not found".to_string()));
     }
     if node.is_deleted() {
@@ -61,9 +61,9 @@ impl<'a> GetDownloadInfoUseCase<'a> {
       .ok_or_else(|| AppError::NotFound("file content not found".to_string()))?;
 
     Ok(GetDownloadInfoOutput {
-      stored_filename: content.stored_filename,
-      original_name: node.name,
-      mime_type: content.mime_type,
+      stored_filename: content.stored_filename().to_string(),
+      original_name: node.name().to_string(),
+      mime_type: content.mime_type().to_string(),
     })
   }
 }

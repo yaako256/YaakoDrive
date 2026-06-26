@@ -4,10 +4,6 @@ backend/crates/app/src/usecase/trash/restore_node.rs
 deleted_atをNoneにする
 */
 
-// 外部クレート
-
-use chrono::Utc;
-
 // 内部ライブラリ
 use identity::{NodeId, UserId};
 use node::model::Node;
@@ -34,39 +30,27 @@ impl<'a> RestoreNodeUseCase<'a> {
   }
 
   pub async fn execute(&self, input: RestoreNodeInput) -> AppResult<Node> {
-    let mut node = self
+    let node = self
       .node_repo
       .find_by_id(&input.node_id)
       .await?
       .ok_or_else(|| AppError::NotFound("node not found".to_string()))?;
 
     // 権限チェック
-    if node.owner_user_id != input.requester_user_id {
+    if node.owner_user_id() != &input.requester_user_id {
       return Err(AppError::NotFound("node not found".to_string()));
     }
 
-    // ゴミ箱内にあることを確認
-    if !node.is_deleted() {
-      return Err(AppError::InvalidInput("node is not in trash".to_string()));
-    }
-
     // 復元後の名前を決定する
-    let restore_name = match input.new_name {
-      Some(ref name) => {
-        validate_name(name)?;
-        name.clone()
-      }
-      None => node.name.clone(),
-    };
+    let restore_name = input.new_name.as_deref().unwrap_or(node.name());
+
+    // 名前チェック
+    validate_name(restore_name)?;
 
     // 復元先に同名の active ノードが存在するか確認
     let conflict = self
       .node_repo
-      .exists_active_with_name(
-        &input.requester_user_id,
-        node.parent_id.as_ref(),
-        &restore_name,
-      )
+      .exists_active_with_name(&input.requester_user_id, node.parent_id(), &restore_name)
       .await?;
 
     if conflict {
@@ -76,24 +60,23 @@ impl<'a> RestoreNodeUseCase<'a> {
       )));
     }
 
-    let now = Utc::now();
-
-    // 名前が変わる場合は先に更新する（deleted_at は維持）
-    if restore_name != node.name {
-      node.name = restore_name;
-      node.updated_at = now;
-      self.node_repo.update(&node).await?;
+    // Node型をゴミ箱から戻す
+    let mut restored_node = node;
+    // 名前を変更する場合はする
+    if let Some(name) = input.new_name {
+      restored_node.rename(name)?;
+      // 名前更新のためにupdate
+      self.node_repo.update(&restored_node).await?;
     }
+    // Node型をゴミ箱から戻す
+    restored_node.restore()?;
 
     // deleted_at を NULL に戻す（配下含む）
     self
       .node_repo
-      .restore_with_descendants(&input.node_id, now)
+      .restore_with_descendants(restored_node.id(), restored_node.updated_at())
       .await?;
 
-    // 復元後の状態を返す
-    node.deleted_at = None;
-    node.updated_at = now;
-    Ok(node)
+    Ok(restored_node)
   }
 }

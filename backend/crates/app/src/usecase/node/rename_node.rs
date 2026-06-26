@@ -37,13 +37,8 @@ impl<'a> RenameNodeUseCase<'a> {
       .ok_or(AppError::NotFound("node not found".to_string()))?;
 
     // 他ユーザのNodeはリネームできない
-    if node.owner_user_id != input.requester_user_id {
+    if node.owner_user_id() != &input.requester_user_id {
       return Err(AppError::NotFound("node not found".to_string()));
-    }
-
-    // 削除済みのNodeはリネームできない
-    if node.is_deleted() {
-      return Err(AppError::InvalidInput("node is deleted".to_string()));
     }
 
     // 名前を更新
