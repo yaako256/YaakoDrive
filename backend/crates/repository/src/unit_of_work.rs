@@ -36,6 +36,8 @@ pub trait TransactionContext: Send + Sync {
   async fn update_file_content(&mut self, content: &FileContent) -> RepoResult<()>;
 
   // トランザクション制御
+  // Transactionを消費してcommitする。
+  // commit後に誤って再利用されないようBoxで所有権を消費する。
   async fn commit(self: Box<Self>) -> RepoResult<()>;
   async fn rollback(self: Box<Self>) -> RepoResult<()>;
 }
