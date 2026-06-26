@@ -9,11 +9,11 @@ use chrono::Utc;
 // 内部ライブラリ
 use identity::{NodeId, UserId};
 use node::model::{Node, NodeStatus, NodeType};
+use node::name::validate_name;
 use repository::NodeRepository;
 
 // 自クレート
 use crate::error::{AppError, AppResult};
-use crate::usecase::node::validate_name;
 
 pub struct CreateFolderInput {
   pub owner_user_id: UserId,

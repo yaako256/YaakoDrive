@@ -52,6 +52,7 @@ impl IntoResponse for ApiAppError {
 
       // 仮定義
       AppError::Storage(msg) => (StatusCode::CONFLICT, "storage", msg),
+      AppError::Node(msg) => (StatusCode::CONFLICT, "node", msg),
     };
 
     let body = Json(ApiResponse::<()>::err(code, &message));

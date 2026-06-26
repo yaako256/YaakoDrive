@@ -3,9 +3,6 @@ backend/crates/app/src/usecase/node/rename_node.rs
 フォルダやファイルのリネームをするユースケース
 */
 
-// 外部クレート
-use chrono::Utc;
-
 // 内部ライブラリ
 use identity::{NodeId, UserId};
 use node::model::Node;
@@ -13,7 +10,6 @@ use repository::NodeRepository;
 
 // 自クレート
 use crate::error::{AppError, AppResult};
-use crate::usecase::node::validate_name;
 
 pub struct RenameNodeInput {
   pub node_id: NodeId,
@@ -33,9 +29,6 @@ impl<'a> RenameNodeUseCase<'a> {
 
   /// リネームを実行
   pub async fn execute(&self, input: RenameNodeInput) -> AppResult<Node> {
-    // 名前の検証
-    validate_name(&input.new_name)?;
-
     // NodeIdからNode型を取得
     let mut node = self
       .node_repo
@@ -54,9 +47,7 @@ impl<'a> RenameNodeUseCase<'a> {
     }
 
     // 名前を更新
-    node.name = input.new_name;
-    // updated_atを更新
-    node.updated_at = Utc::now();
+    node.rename(input.new_name);
 
     // Nodeの更新(リネームの実行)
     self.node_repo.update(&node).await.map_err(|e| match e {

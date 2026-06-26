@@ -15,6 +15,9 @@ backend/data/*/*
 # 自分用フォルダ除外
 detailed_development_guide
 
+# 自分用のファイル除外
+generate_tree_ver2.py
+
 # Rustのビルド成果物は巨大になるため必須
 target
 

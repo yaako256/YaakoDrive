@@ -160,11 +160,15 @@ prod-ps:
 # ==================================
 ### その他 (Utilities)
 # ==================================
-.PHONY: chown help
+.PHONY: chown tree help
 
 ## カレントディレクトリ内の全ファイルに権限の付与
 chown:
 	sudo chown -R $(shell whoami):$(shell whoami) .
+
+## フォルダツリーを表示 (自作Pythonスクリプト実行)
+tree:
+	python3 ./generate_tree_ver2.py . 100 target .git .sqlx frontend
 
 ## このMakefileのヘルプメッセージを表示
 # `#`が3つのものを検知し、グループ名を表示している

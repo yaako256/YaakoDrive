@@ -34,6 +34,9 @@ pub enum AppError {
   #[error("storage error: {0}")]
   Storage(String),
 
+  #[error("node error: {0}")]
+  Node(String),
+
   #[error("storage limit exceeded")]
   StorageLimitExceeded,
 }
@@ -64,5 +67,12 @@ impl From<auth::AuthError> for AppError {
 impl From<storage::StorageError> for AppError {
   fn from(e: storage::StorageError) -> Self {
     AppError::Storage(e.to_string())
+  }
+}
+
+// NodeError → AppError
+impl From<node::NodeError> for AppError {
+  fn from(e: node::NodeError) -> Self {
+    AppError::Node(e.to_string())
   }
 }

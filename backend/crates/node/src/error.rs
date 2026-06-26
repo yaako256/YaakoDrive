@@ -28,4 +28,4 @@ pub enum NodeError {
 
 // nodeクレートのリザルト
 // 現状未使用のためコメントアウト
-// pub type NodeResult<T> = Result<T, NodeError>;
+pub type NodeResult<T> = Result<T, NodeError>;

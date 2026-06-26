@@ -1,0 +1,77 @@
+# リファクタリングメモ
+現在、backendが完成したところである。
+フロントエンド作成に向け、一旦リファクタリングを行おうと思う。
+その点をメモしていく。
+実際にすべてをリファクタリングするかは要検討である
+
+## Nodeが中心であることをもっと設計書に書いてもいい
+YaakoDriveはFile管理システムというよりNode管理システムといっていい可能性がある
+
+## Upload整合性
+後でチャンクアップロードを作るならUpload Sessionという概念がほぼ確実に出る。なのでtmpではなくupload_sessionという言葉を今から使ってもいいかもしれない
+
+## ストレージ抽象
+今はLocal Storageですが、設計書にStorage Serviceという言葉を少し書いておくと、将来
+```
+Local
+↓
+S3
+↓
+NAS
+```
+へ差し替えられるのではないか。
+
+## Dashboard
+MVPに使用容量があります。気になったのは毎回SUMするの？です。例えばSELECT SUM(size)でも十分ですが、将来数百万ファイルになると重いです。将来的にはUserStatisticsのような集計テーブルを導入する可能性があります。MVPでは不要ですが、設計思想としてDashboardは集計系という認識を持っておくと後で楽
+
+## Search
+検索は後から意外と大変になります。例えばILIKE '%abc%'なのかpg_trgmなのか全文検索なのか。MVPでは十分ですが、将来PostgreSQL Full Text Searchまで考えるならRepositoryを少し意識すると後で楽になる。
+最終的には部分一致のほかに、少しでも一致(打ち間違えなど)で、一致している順に出すのようなこともしたいと考えている。
+`例: 検索(errr) 検索結果(error)`
+
+
+
+
+
+
+
+
+
+
+## backend/Cargo.toml
+tokioがfullになっているので最終的には削ってもいいかもしれない。
+
+## Nodeクレート
+### 責務の考え
+Nodeに振る舞いが無い。
+今は`pub name: String`になっているが、Renameはユースケースがやりそうである。
+`node.rename(...)`に寄せてもいいのではないか。
+こうするとRename RuleがNodeへ閉じ込められるのではないか。
+同じように
+```rust
+delete()
+restore()
+move_to()
+```
+などもNode側へ持たせた方がいいのではないか。Name(String)というValue Objectにするのも良いかもしれない。
+
+
+### エラー型
+```rust
+impl TryFrom<&str> for NodeStatus {
+  type Error = String;
+  ...
+}
+```
+ここをStringではなくNodeErrorでもいいかもしれない
+
+### NodeError
+これは少し違和感があるかもしれない。例えばAlreadyDeletedがあります。でもNode自身にdelete()がありません。つまりエラーだけある。これはUseCaseにロジックがある可能性があります。私はNodeErrorはNodeのメソッドから返ってきてほしいかもしれない。
+
+
+
+
+# 実際にすでにリファクタリングした箇所
+## validate_name() を node crateへ移動
+validate_name()を`node/name.rs`に移動し、Nodeにrename()を追加した。
+これにより、ドメインルールをNodeへ寄せれた。

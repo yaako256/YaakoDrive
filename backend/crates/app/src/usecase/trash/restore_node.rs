@@ -11,11 +11,11 @@ use chrono::Utc;
 // 内部ライブラリ
 use identity::{NodeId, UserId};
 use node::model::Node;
+use node::name::validate_name;
 use repository::NodeRepository;
 
 // 自クレート
 use crate::error::{AppError, AppResult};
-use crate::usecase::node::validate_name;
 
 pub struct RestoreNodeInput {
   pub node_id: NodeId,

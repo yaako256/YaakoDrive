@@ -11,6 +11,10 @@ use chrono::{DateTime, Utc};
 // Id型
 use identity::{NodeId, UserId};
 
+// 自クレート
+use crate::error::{NodeError, NodeResult};
+use crate::name::validate_name;
+
 /// Node種類の列挙
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum NodeType {
@@ -106,6 +110,25 @@ impl Node {
   /// activeかどうか
   pub fn is_active(&self) -> bool {
     self.status == NodeStatus::Active && !self.is_deleted()
+  }
+
+  /// リネームをする
+  pub fn rename(&mut self, new_name: String) -> NodeResult<()> {
+    // 名前の検証
+    validate_name(&new_name)?;
+
+    // 既に削除されているかチェック
+    if self.deleted_at.is_some() {
+      return Err(NodeError::AlreadyDeleted);
+    }
+
+    // 名前の更新
+    self.name = new_name;
+
+    // 更新時間も更新
+    self.updated_at = Utc::now();
+
+    Ok(())
   }
 }
 
