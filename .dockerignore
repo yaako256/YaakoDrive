@@ -20,7 +20,11 @@ frontend/dist
 
 # Local data
 .env
-data
+data/*
+
+# マウントの設定のせいでここに作られちゃった
+# backend/data/files/の中身がいろいろある
+backend/data/*/*
 
 # Editor / OS
 .vscode

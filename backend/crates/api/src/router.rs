@@ -48,6 +48,9 @@ pub fn create_router(state: AppState) -> Router {
     .route("/api/nodes/{id}/upload", post(upload_handler)) // 追加
     .route("/api/nodes/{id}/download-url", get(download_url_handler)) // 追加
     .route("/api/files/download/{token}", get(download_handler))
+    // デフォルトだと2MBまでしか送信できないので、仮で制限をなくす
+    .layer(axum::extract::DefaultBodyLimit::disable())
+    // State管理
     .with_state(state)
 }
 
