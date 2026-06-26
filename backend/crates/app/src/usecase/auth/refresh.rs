@@ -5,7 +5,7 @@ RefreshTokenの更新をするユースケースを定義
 
 // 内部ライブラリ
 use auth::token::hash_token;
-use auth::{jwt::JwtService, model::RefreshToken, token::generate_refresh_token};
+use auth::{jwt::JwtService, model::RefreshToken};
 use repository::{RefreshTokenRepository, UserRepository};
 
 // 自クレート
@@ -78,12 +78,9 @@ impl<'a> RefreshUseCase<'a> {
       .generate_access_token(user.id(), user.role().as_str())?;
 
     // 新Refresh Token生成
-    let raw_token = generate_refresh_token();
-
     // RefreshToken型を作成
-    let refresh_token = RefreshToken::new(
+    let (raw_token, refresh_token) = RefreshToken::new(
       *user.id(),
-      raw_token.clone(),
       input.user_agent,
       input.refresh_token_expires_secs,
     );

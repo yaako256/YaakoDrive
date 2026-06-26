@@ -4,9 +4,7 @@ backend/crates/app/src/usecase/auth/login.rs
 */
 
 // 内部ライブラリ
-use auth::{
-  jwt::JwtService, model::RefreshToken, password::verify_password, token::generate_refresh_token,
-};
+use auth::{jwt::JwtService, model::RefreshToken, password::verify_password};
 use repository::{RefreshTokenRepository, UserRepository};
 
 // 自クレート
@@ -72,12 +70,9 @@ impl<'a> LoginUseCase<'a> {
       .generate_access_token(user.id(), user.role().as_str())?;
 
     // Refresh Token生成
-    let raw_token = generate_refresh_token();
-
     // RefreshToken型を作成
-    let refresh_token = RefreshToken::new(
+    let (raw_token, refresh_token) = RefreshToken::new(
       *user.id(),
-      raw_token.clone(),
       input.user_agent,
       input.refresh_token_expires_secs,
     );

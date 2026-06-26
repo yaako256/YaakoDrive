@@ -15,7 +15,7 @@ use crate::AuthError;
 // 自クレート
 use crate::error::AuthResult;
 use crate::password::hash_password;
-use crate::token::hash_token;
+use crate::token::{generate_refresh_token, hash_token};
 use crate::validation::{validate_password, validate_username};
 
 /// ロールの列挙型
@@ -193,12 +193,10 @@ pub struct RefreshToken {
 impl RefreshToken {
   // --- コンストラクタ系 ---
   // 新規トークン
-  pub fn new(
-    user_id: UserId,
-    raw_token: String,
-    user_agent: Option<String>,
-    expires_secs: u64,
-  ) -> Self {
+  pub fn new(user_id: UserId, user_agent: Option<String>, expires_secs: u64) -> (String, Self) {
+    // 新規トークンの発行
+    let raw_token = generate_refresh_token();
+
     // 現在時刻取得
     let now = Utc::now();
     // 失効時間を設定
@@ -207,15 +205,18 @@ impl RefreshToken {
     // トークンのハッシュ
     let token_hash = hash_token(&raw_token);
 
-    Self {
-      id: RefreshTokenId::new(),
-      user_id: user_id,
-      token_hash,
-      user_agent: user_agent,
-      expires_at,
-      created_at: now,
-      revoked_at: None,
-    }
+    (
+      raw_token,
+      Self {
+        id: RefreshTokenId::new(),
+        user_id: user_id,
+        token_hash,
+        user_agent: user_agent,
+        expires_at,
+        created_at: now,
+        revoked_at: None,
+      },
+    )
   }
 
   /// 匿名構造体等を復元するときとかに使う
