@@ -315,15 +315,15 @@ impl PgNodeRepository {
       )
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       "#,
-      node.id.as_uuid(),
-      node.owner_user_id.as_uuid(),
-      node.parent_id.as_ref().map(|id| *id.as_uuid()),
-      node.name,
-      node.node_type.as_str(),
-      node.status.as_str(),
-      node.deleted_at,
-      node.created_at,
-      node.updated_at,
+      node.id().as_uuid(),
+      node.owner_user_id().as_uuid(),
+      node.parent_id().as_ref().map(|id| *id.as_uuid()),
+      node.name(),
+      node.node_type().as_str(),
+      node.status().as_str(),
+      node.deleted_at(),
+      node.created_at(),
+      node.updated_at(),
     )
     .execute(&self.pool)
     .await
@@ -355,12 +355,12 @@ impl PgNodeRepository {
       WHERE
         id = $1
       "#,
-      node.id.as_uuid(),
-      node.parent_id.as_ref().map(|id| *id.as_uuid()),
-      node.name,
-      node.status.as_str(),
-      node.deleted_at,
-      node.updated_at,
+      node.id().as_uuid(),
+      node.parent_id().as_ref().map(|id| *id.as_uuid()),
+      node.name(),
+      node.status().as_str(),
+      node.deleted_at(),
+      node.updated_at(),
     )
     .execute(&self.pool)
     .await?

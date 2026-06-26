@@ -40,15 +40,15 @@ impl TransactionContext for PgTransactionContext {
       )
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       "#,
-      node.id.as_uuid(),
-      node.owner_user_id.as_uuid(),
-      node.parent_id.as_ref().map(|id| *id.as_uuid()),
-      node.name,
-      node.node_type.as_str(),
-      node.status.as_str(),
-      node.deleted_at,
-      node.created_at,
-      node.updated_at,
+      node.id().as_uuid(),
+      node.owner_user_id().as_uuid(),
+      node.parent_id().as_ref().map(|id| *id.as_uuid()),
+      node.name(),
+      node.node_type().as_str(),
+      node.status().as_str(),
+      node.deleted_at(),
+      node.created_at(),
+      node.updated_at(),
     )
     .execute(&mut *self.tx)
     .await
@@ -79,12 +79,12 @@ impl TransactionContext for PgTransactionContext {
       WHERE
         id = $1
       "#,
-      node.id.as_uuid(),
-      node.parent_id.as_ref().map(|id| *id.as_uuid()),
-      node.name,
-      node.status.as_str(),
-      node.deleted_at,
-      node.updated_at,
+      node.id().as_uuid(),
+      node.parent_id().as_ref().map(|id| *id.as_uuid()),
+      node.name(),
+      node.status().as_str(),
+      node.deleted_at(),
+      node.updated_at(),
     )
     .execute(&mut *self.tx)
     .await
@@ -114,13 +114,13 @@ impl TransactionContext for PgTransactionContext {
       )
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       "#,
-      content.node_id.as_uuid(),
-      content.stored_filename,
-      content.mime_type,
-      content.size_bytes,
-      content.status.as_str(),
-      content.created_at,
-      content.updated_at,
+      content.node_id().as_uuid(),
+      content.stored_filename(),
+      content.mime_type(),
+      content.size_bytes(),
+      content.status().as_str(),
+      content.created_at(),
+      content.updated_at(),
     )
     .execute(&mut *self.tx)
     .await
@@ -145,12 +145,12 @@ impl TransactionContext for PgTransactionContext {
       WHERE
         node_id = $1
       "#,
-      content.node_id.as_uuid(),
-      content.stored_filename,
-      content.mime_type,
-      content.size_bytes,
-      content.status.as_str(),
-      content.updated_at,
+      content.node_id().as_uuid(),
+      content.stored_filename(),
+      content.mime_type(),
+      content.size_bytes(),
+      content.status().as_str(),
+      content.updated_at(),
     )
     .execute(&mut *self.tx)
     .await

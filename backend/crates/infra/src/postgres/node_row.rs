@@ -33,16 +33,16 @@ impl TryFrom<NodeRow> for Node {
   type Error = NodeError;
 
   fn try_from(row: NodeRow) -> Result<Self, Self::Error> {
-    Ok(Node {
-      id: NodeId::from_uuid(row.id),
-      owner_user_id: UserId::from_uuid(row.owner_user_id),
-      parent_id: row.parent_id.map(NodeId::from_uuid),
-      name: row.name,
-      node_type: NodeType::try_from(row.node_type.as_str())?,
-      status: NodeStatus::try_from(row.status.as_str())?,
-      deleted_at: row.deleted_at,
-      created_at: row.created_at,
-      updated_at: row.updated_at,
-    })
+    Ok(Node::reconstitute(
+      NodeId::from_uuid(row.id),
+      UserId::from_uuid(row.owner_user_id),
+      row.parent_id.map(NodeId::from_uuid),
+      row.name,
+      NodeType::try_from(row.node_type.as_str())?,
+      NodeStatus::try_from(row.status.as_str())?,
+      row.deleted_at,
+      row.created_at,
+      row.updated_at,
+    ))
   }
 }

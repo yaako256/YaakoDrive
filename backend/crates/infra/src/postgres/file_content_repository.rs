@@ -104,18 +104,24 @@ impl PgFileContentRepository {
     .await?;
 
     // 匿名構造体をFileContent型にして返す
-    Ok(row.map(|r| FileContent {
-      node_id: NodeId::from_uuid(r.node_id),
-      stored_filename: r.stored_filename,
-      mime_type: r.mime_type,
-      size_bytes: r.size_bytes,
-      status: if r.status == "active" {
+    Ok(row.map(|r| {
+      // 先にstatusをStatus型にする
+      let status = if r.status == "active" {
         FileContentStatus::Active
       } else {
         FileContentStatus::Pending
-      },
-      created_at: r.created_at,
-      updated_at: r.updated_at,
+      };
+
+      // FileContent型にする
+      FileContent::reconstitute(
+        NodeId::from_uuid(r.node_id),
+        r.stored_filename,
+        r.mime_type,
+        r.size_bytes,
+        status,
+        r.created_at,
+        r.updated_at,
+      )
     }))
   }
 
@@ -135,13 +141,13 @@ impl PgFileContentRepository {
       )
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       "#,
-      content.node_id.as_uuid(),
-      content.stored_filename,
-      content.mime_type,
-      content.size_bytes,
-      content.status.as_str(),
-      content.created_at,
-      content.updated_at,
+      content.node_id().as_uuid(),
+      content.stored_filename(),
+      content.mime_type(),
+      content.size_bytes(),
+      content.status().as_str(),
+      content.created_at(),
+      content.updated_at(),
     )
     .execute(&self.pool)
     .await?;
@@ -166,12 +172,12 @@ impl PgFileContentRepository {
       WHERE
         node_id = $1
       "#,
-      content.node_id.as_uuid(),
-      content.stored_filename,
-      content.mime_type,
-      content.size_bytes,
-      content.status.as_str(),
-      content.updated_at,
+      content.node_id().as_uuid(),
+      content.stored_filename(),
+      content.mime_type(),
+      content.size_bytes(),
+      content.status().as_str(),
+      content.updated_at(),
     )
     .execute(&self.pool)
     .await?

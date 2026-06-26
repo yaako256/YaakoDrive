@@ -141,9 +141,70 @@ impl Node {
     })
   }
 
-  // ---- ゲッター関数 or 真偽関数 ----
-  // 後で必要なゲッター関数を作る
+  /// 匿名構造体等を復元するときとかに使う
+  pub fn reconstitute(
+    id: NodeId,
+    owner_user_id: UserId,
+    parent_id: Option<NodeId>,
+    name: String,
+    node_type: NodeType,
+    status: NodeStatus,
+    deleted_at: Option<DateTime<Utc>>,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
+  ) -> Self {
+    Self {
+      id,
+      owner_user_id,
+      parent_id,
+      name,
+      node_type,
+      status,
+      deleted_at,
+      created_at,
+      updated_at,
+    }
+  }
 
+  // ---- ゲッター関数 ----
+  /// idのゲッター関数
+  pub fn id(&self) -> &NodeId {
+    &self.id
+  }
+  /// owner_user_idのゲッター関数
+  pub fn owner_user_id(&self) -> &UserId {
+    &self.owner_user_id
+  }
+  /// parent_idのゲッター関数
+  pub fn parent_id(&self) -> Option<&NodeId> {
+    self.parent_id.as_ref()
+  }
+  /// nameのゲッター関数
+  pub fn name(&self) -> &str {
+    &self.name
+  }
+  /// statusのゲッター関数
+  pub fn status(&self) -> &NodeStatus {
+    &self.status
+  }
+  /// node_typeのゲッター関数
+  pub fn node_type(&self) -> &NodeType {
+    &self.node_type
+  }
+  /// deleted_atのゲッター関数
+  pub fn deleted_at(&self) -> Option<DateTime<Utc>> {
+    self.deleted_at
+  }
+  /// created_atのゲッター関数
+  pub fn created_at(&self) -> DateTime<Utc> {
+    self.created_at
+  }
+  /// updated_atのゲッター関数
+  pub fn updated_at(&self) -> DateTime<Utc> {
+    self.updated_at
+  }
+
+  // ---- 真偽関数 ----
   /// フォルダーかどうか
   pub fn is_folder(&self) -> bool {
     self.node_type == NodeType::Folder
@@ -163,6 +224,8 @@ impl Node {
   pub fn is_active(&self) -> bool {
     self.status == NodeStatus::Active && !self.is_deleted()
   }
+
+  // ---- ドメインロジック系 ----
 
   /// updated_atを更新する
   fn touch(&mut self) {
@@ -305,6 +368,59 @@ impl FileContent {
       updated_at: Utc::now(),
     }
   }
+
+  /// 匿名構造体等を復元するときとかに使う
+  pub fn reconstitute(
+    node_id: NodeId,
+    stored_filename: String,
+    mime_type: String,
+    size_bytes: i64,
+    status: FileContentStatus,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
+  ) -> Self {
+    Self {
+      node_id,
+      stored_filename,
+      mime_type,
+      size_bytes,
+      status,
+      created_at,
+      updated_at,
+    }
+  }
+
+  // ---- ゲッター関数 ----
+  /// node_idのゲッター関数
+  pub fn node_id(&self) -> &NodeId {
+    &self.node_id
+  }
+  /// stored_filenameのゲッター関数
+  pub fn stored_filename(&self) -> &String {
+    &self.stored_filename
+  }
+  /// mime_typeのゲッター関数
+  pub fn mime_type(&self) -> &String {
+    &self.mime_type
+  }
+  /// size_bytesのゲッター関数
+  pub fn size_bytes(&self) -> i64 {
+    self.size_bytes
+  }
+  /// statusのゲッター関数
+  pub fn status(&self) -> &FileContentStatus {
+    &self.status
+  }
+  /// created_atのゲッター関数
+  pub fn created_at(&self) -> DateTime<Utc> {
+    self.created_at
+  }
+  /// updated_atのゲッター関数
+  pub fn updated_at(&self) -> DateTime<Utc> {
+    self.updated_at
+  }
+
+  // ---- ドメインロジック系 ----
 
   /// Activeかの確認
   pub fn is_active(&self) -> bool {
