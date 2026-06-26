@@ -98,3 +98,77 @@ curl -s -b cookies_1.txt -X PATCH http://localhost:9090/api/nodes/{id}/rename \
 # nodeテーブルの確認
 make node
 ```
+
+
+
+## アップロードテスト関連のapi検証フロー
+```bash
+# 実行場所にあらかじめupload_test.txtなどを用意しておく
+
+# ヘルスチェック
+curl -s http://localhost:9090/api/health | jq
+
+# ログインしてCookieを取得(1ユーザ目)
+curl -s -c cookies_1.txt -X POST http://localhost:9090/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"yaako-admin","password":"yaakoadmin"}' | jq
+
+# refresh
+curl -s -b cookies_1.txt -c cookies.txt -X POST \
+  http://localhost:9090/api/auth/refresh | jq
+
+# Logout
+curl -s -b cookies_1.txt -X POST \
+  http://localhost:9090/api/auth/logout | jq
+
+
+
+
+
+
+# ルートの子一覧取得(確認)
+# 現在、personalというフォルダがルートにあるはずである。
+curl -s -b cookies_1.txt http://localhost:9090/api/nodes | jq
+
+# personalフォルダ内の子一覧取得(確認)
+# まだ何もないはずである
+curl -s -b cookies_1.txt http://localhost:9090/api/nodes/{id}/children | jq
+
+# ルート直下へアップロード
+curl -s -b cookies_1.txt -X POST http://localhost:9090/api/nodes/upload \
+  -F "file=@./upload_test_file/test.txt" | jq
+
+# もう一回ルート直下へアップロード
+# 同名ファイルで 409 AlreadyExists が返ることの確認
+curl -s -b cookies_1.txt -X POST http://localhost:9090/api/nodes/upload \
+  -F "file=@./upload_test_file/test.txt" | jq
+
+# フォルダにアップロード
+curl -s -b cookies_1.txt -X POST http://localhost:9090/api/nodes/{folder_id}/upload \
+  -F "file=@./upload_test_file/test_1.txt" | jq
+
+# フォルダ内に画像ファイルをアップロード
+curl -s -b cookies_1.txt -X POST http://localhost:9090/api/nodes/{folder_id}/upload \
+  -F "file=@./upload_test_file/test_photo.txt" | jq
+
+# フォルダに大きめのファイルをアップロード
+curl -s -b cookies_1.txt -X POST http://localhost:9090/api/nodes/{folder_id}/upload \
+  -F "file=@./upload_test_file/test_large_photo.jpg" | jq
+
+# ダウンロードURL取得
+curl -s -b cookies.txt http://localhost:9090/api/nodes/{node_id}/download-url | jq
+
+# 実ファイル取得(認証不要)
+# これをブラウザのurl欄に入れてみる
+# http://localhost:9090/api/files/download/{token}
+
+# もう一度ダウンロードしてみる
+# 404 Not Foundが出るはず
+# http://localhost:9090/api/files/download/{token}
+
+
+# まだやってないもの
+# 10MBのファイルを送信(6MBはやった)
+# アップロード失敗時に tmp/ に残骸が残らない ← 残ってないものはわからん
+```
+

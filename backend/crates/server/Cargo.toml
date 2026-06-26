@@ -9,6 +9,7 @@ config = { path = "../config" }
 api    = { path = "../api" }
 auth = { path = "../auth" }
 infra = { path = "../infra" } 
+storage = { path = "../storage" } 
 
 # workspace共通外部クレート
 tracing = { workspace = true }

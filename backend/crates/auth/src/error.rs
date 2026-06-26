@@ -1,5 +1,5 @@
 /*
-backend/crates/server/src/error.rs
+backend/crates/auth/src/error.rs
 authクレートのエラー型の定義
 */
 

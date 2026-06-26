@@ -26,5 +26,6 @@ pub enum NodeError {
   AlreadyDeleted,
 }
 
-// / nodeクレートのリザルト
+// nodeクレートのリザルト
+// 現状未使用のためコメントアウト
 // pub type NodeResult<T> = Result<T, NodeError>;

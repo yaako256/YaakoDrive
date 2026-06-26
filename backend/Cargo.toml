@@ -15,7 +15,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
 # Webフレームワーク/高レイヤー通信
-axum = "0.8"
+axum = {version = "0.8", features = ["multipart"]}
 
 # 非同期処理/低レイヤー通信
 tokio = { version = "1", features = ["full"] }
@@ -34,3 +34,13 @@ sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "postgres", "uuid"
 
 # 16進数化用
 hex = "0.4"
+
+# メモリ上のバイト列を効率よく扱う用
+# 大きなファイルなどのバッファ処理等
+bytes       = "1"
+
+# ファイル名や拡張子から適切なMINEタイプを推測する用
+mime_guess  = "2"
+
+# futureの追加コンテンツ
+futures-util = "0.3"

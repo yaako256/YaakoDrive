@@ -20,7 +20,7 @@ frontend/dist
 
 # Local data
 .env
-data
+data/*
 
 # Editor / OS
 .vscode

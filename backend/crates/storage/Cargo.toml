@@ -4,3 +4,18 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+# workspace共通外部クレート
+thiserror  = { workspace = true }
+tokio      = { workspace = true }
+async-trait = { workspace = true }
+uuid       = { workspace = true }
+tracing    = { workspace = true }
+bytes = { workspace = true }
+futures-util  = { workspace = true }
+
+# 固有クレート
+# tokioの非同期I/O(ストリーム)用
+tokio-util   = { version = "0.7", features = ["io"] }
+# 非同期処理の定義集用
+futures-core = "0.3"
+

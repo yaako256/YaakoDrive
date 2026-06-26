@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      INSERT INTO nodes (\n        id, \n        owner_user_id, \n        parent_id, \n        name, \n        node_type, \n        status,\n        deleted_at,\n        created_at, \n        updated_at\n      )\n      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)\n      ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Timestamptz",
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e7216cf093e989910cf16bda351e139c40891586ef55143b9409a7a1ec635340"
+}

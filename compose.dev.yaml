@@ -23,6 +23,8 @@ name: yaakodrive-dev
 
 services:
   db:
+    container_name: yaakodrive_db_dev
+
     # envファイルの指定
     env_file: .config/.env.dev
 
