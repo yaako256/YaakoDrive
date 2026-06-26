@@ -33,8 +33,8 @@ impl From<node::model::Node> for NodeResponse {
       parent_id: n.parent_id().map(|id| id.to_string()),
       name: n.name().to_string(),
       node_type: n.node_type().as_str().to_string(),
-      created_at: n.created_at(),
-      updated_at: n.updated_at(),
+      created_at: *n.created_at(),
+      updated_at: *n.updated_at(),
     }
   }
 }

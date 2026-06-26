@@ -321,7 +321,7 @@ impl PgNodeRepository {
       node.name(),
       node.node_type().as_str(),
       node.status().as_str(),
-      node.deleted_at(),
+      *node.deleted_at(),
       node.created_at(),
       node.updated_at(),
     )
@@ -359,7 +359,7 @@ impl PgNodeRepository {
       node.parent_id().as_ref().map(|id| *id.as_uuid()),
       node.name(),
       node.status().as_str(),
-      node.deleted_at(),
+      *node.deleted_at(),
       node.updated_at(),
     )
     .execute(&self.pool)

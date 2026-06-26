@@ -44,7 +44,7 @@ impl<'a> GetDownloadInfoUseCase<'a> {
       .await?
       .ok_or_else(|| AppError::NotFound("node not found".to_string()))?;
 
-    if node.ensure_owner(&input.requester_user_id) {
+    if node.is_owner(&input.requester_user_id) {
       return Err(AppError::NotFound("node not found".to_string()));
     }
     if node.is_deleted() {

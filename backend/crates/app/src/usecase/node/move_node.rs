@@ -42,13 +42,9 @@ impl<'a> MoveNodeUseCase<'a> {
       .ok_or(AppError::NotFound("node not found".to_string()))?;
 
     // 他ユーザのNodeは移動できない
-    if node.ensure_owner(&input.requester_user_id) {
+    if node.is_owner(&input.requester_user_id) {
       return Err(AppError::NotFound("node not found".to_string()));
     }
-
-    // 循環チェック用: 移動先が自分の子孫でないか確認
-    // 自身の子孫には移動できない
-    let mut ancestor_ids: Vec<NodeId> = Vec::new();
 
     // 移動先の確認
     if let Some(ref new_parent_id) = input.new_parent_id {
@@ -92,11 +88,12 @@ impl<'a> MoveNodeUseCase<'a> {
 
       // 循環チェック: 移動先が自分の子孫でないか確認
       // 自身の子孫には移動できない
-      ancestor_ids = self.node_repo.find_ancestor_ids(new_parent_id).await?;
+      let ancestor_ids = self.node_repo.find_ancestor_ids(new_parent_id).await?;
+      node.ensure_can_move_node(*new_parent_id, &ancestor_ids)?;
     }
 
     // 親NodeIdの置き換え
-    node.move_node(input.new_parent_id, &ancestor_ids)?;
+    node.move_node(input.new_parent_id)?;
 
     // Nodeの更新(移動の実行)
     self

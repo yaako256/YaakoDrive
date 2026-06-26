@@ -180,7 +180,7 @@ impl Node {
     self.parent_id.as_ref()
   }
   /// nameのゲッター関数
-  pub fn name(&self) -> &String {
+  pub fn name(&self) -> &str {
     &self.name
   }
   /// statusのゲッター関数
@@ -192,16 +192,16 @@ impl Node {
     &self.node_type
   }
   /// deleted_atのゲッター関数
-  pub fn deleted_at(&self) -> Option<DateTime<Utc>> {
-    self.deleted_at
+  pub fn deleted_at(&self) -> &Option<DateTime<Utc>> {
+    &self.deleted_at
   }
   /// created_atのゲッター関数
-  pub fn created_at(&self) -> DateTime<Utc> {
-    self.created_at
+  pub fn created_at(&self) -> &DateTime<Utc> {
+    &self.created_at
   }
   /// updated_atのゲッター関数
-  pub fn updated_at(&self) -> DateTime<Utc> {
-    self.updated_at
+  pub fn updated_at(&self) -> &DateTime<Utc> {
+    &self.updated_at
   }
 
   // ---- 真偽関数 ----
@@ -226,8 +226,18 @@ impl Node {
   }
 
   /// ownerが一致するかどうか
-  pub fn ensure_owner(&self, user_id: &UserId) -> bool {
+  pub fn is_owner(&self, user_id: &UserId) -> bool {
     &self.owner_user_id == user_id
+  }
+
+  /// 移動できるかどうか
+  /// 祖先一覧と比較して循環を防ぐ
+  pub fn ensure_can_move_node(&self, new_parent: NodeId, ancestors: &[NodeId]) -> NodeResult<()> {
+    if ancestors.contains(&new_parent) {
+      return Err(NodeError::CircularMove);
+    }
+
+    Ok(())
   }
 
   // ---- ドメインロジック系 ----
@@ -279,17 +289,10 @@ impl Node {
 
   /// 移動する
   // moveは予約語なので使えない
-  pub fn move_node(&mut self, new_parent: Option<NodeId>, ancestors: &[NodeId]) -> NodeResult<()> {
+  pub fn move_node(&mut self, new_parent: Option<NodeId>) -> NodeResult<()> {
     // 削除済みのNodeは移動できない
     if self.deleted_at.is_some() {
       return Err(NodeError::AlreadyDeleted);
-    }
-
-    // 祖先との循環を防ぐ
-    if let Some(parent) = new_parent {
-      if ancestors.contains(&parent) {
-        return Err(NodeError::CircularMove);
-      }
     }
 
     // 親のNodeIdを更新
@@ -409,11 +412,11 @@ impl FileContent {
     &self.node_id
   }
   /// stored_filenameのゲッター関数
-  pub fn stored_filename(&self) -> &String {
+  pub fn stored_filename(&self) -> &str {
     &self.stored_filename
   }
   /// mime_typeのゲッター関数
-  pub fn mime_type(&self) -> &String {
+  pub fn mime_type(&self) -> &str {
     &self.mime_type
   }
   /// size_bytesのゲッター関数
@@ -425,12 +428,12 @@ impl FileContent {
     &self.status
   }
   /// created_atのゲッター関数
-  pub fn created_at(&self) -> DateTime<Utc> {
-    self.created_at
+  pub fn created_at(&self) -> &DateTime<Utc> {
+    &self.created_at
   }
   /// updated_atのゲッター関数
-  pub fn updated_at(&self) -> DateTime<Utc> {
-    self.updated_at
+  pub fn updated_at(&self) -> &DateTime<Utc> {
+    &self.updated_at
   }
 
   // ---- ドメインロジック系 ----

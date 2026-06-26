@@ -37,7 +37,7 @@ impl<'a> RestoreNodeUseCase<'a> {
       .ok_or_else(|| AppError::NotFound("node not found".to_string()))?;
 
     // 権限チェック
-    if node.ensure_owner(&input.requester_user_id) {
+    if node.is_owner(&input.requester_user_id) {
       return Err(AppError::NotFound("node not found".to_string()));
     }
 
@@ -74,7 +74,7 @@ impl<'a> RestoreNodeUseCase<'a> {
     // deleted_at を NULL に戻す（配下含む）
     self
       .node_repo
-      .restore_with_descendants(restored_node.id(), restored_node.updated_at())
+      .restore_with_descendants(restored_node.id(), *restored_node.updated_at())
       .await?;
 
     Ok(restored_node)
