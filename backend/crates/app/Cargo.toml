@@ -17,10 +17,9 @@ chrono     = { workspace = true }
 async-trait = { workspace = true }
 hex = { workspace = true }
 uuid       = { workspace = true }
+bytes = { workspace = true }
+mime_guess = { workspace = true }
 
 # 固有クレート
 # 通常ハッシュ化用
 sha2 = "0.10"
-
-# ファイル名や拡張子から適切なMINEタイプを推測する用
-mime_guess  = "2"

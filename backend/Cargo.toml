@@ -34,3 +34,10 @@ sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "postgres", "uuid"
 
 # 16進数化用
 hex = "0.4"
+
+# メモリ上のバイト列を効率よく扱う用
+# 大きなファイルなどのバッファ処理等
+bytes       = "1"
+
+# ファイル名や拡張子から適切なMINEタイプを推測する用
+mime_guess  = "2"

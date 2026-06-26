@@ -16,7 +16,7 @@ use bytes::Bytes;
 use futures_core::Stream;
 
 // 自クレート
-use crate::error::{StorageError, StorageResult};
+use crate::error::StorageResult;
 
 /// ダウンロード時のファイルストリーム型
 /// Pin: メモリ上の位置を固定
