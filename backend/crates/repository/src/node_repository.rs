@@ -70,17 +70,17 @@ pub trait NodeRepository: Send + Sync {
     name: &str,
   ) -> RepoResult<bool>;
 
-  /// 指定ノードと配下の deleted_at を NULL に戻す（論理削除解除）。
+  /// 指定ノードと配下の deleted_at を NULL に戻す(論理削除解除)。
   async fn restore_with_descendants(
     &self,
     id: &NodeId,
     updated_at: DateTime<Utc>,
   ) -> RepoResult<()>;
 
-  /// 名前の部分一致検索（active かつ未削除のみ、大文字小文字を無視）。
+  /// 名前の部分一致検索(active かつ未削除のみ、大文字小文字を無視)。
   async fn search_by_name(&self, owner_user_id: &UserId, query: &str) -> RepoResult<Vec<Node>>;
 
-  /// 指定ノードと配下の NodeId を全件返す（自身を含む）。
+  /// 指定ノードと配下の NodeId を全件返す(自身を含む)。
   /// 物理削除前に削除対象 ID を収集するために使う。
   async fn collect_descendant_ids(&self, id: &NodeId) -> RepoResult<Vec<NodeId>>;
 

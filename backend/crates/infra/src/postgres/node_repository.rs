@@ -87,6 +87,87 @@ impl NodeRepository for PgNodeRepository {
       .await
       .map_err(RepoError::from)
   }
+
+  /// ゴミ箱のルート一覧を取得する。
+  async fn list_trash_roots(&self, owner_user_id: &UserId) -> RepoResult<Vec<Node>> {
+    self
+      .list_trash_roots_impl(owner_user_id)
+      .await
+      .map_err(RepoError::from)
+  }
+
+  /// ゴミ箱内フォルダの子ノード一覧を取得する。
+  async fn list_deleted_children(
+    &self,
+    owner_user_id: &UserId,
+    parent_id: &NodeId,
+  ) -> RepoResult<Vec<Node>> {
+    self
+      .list_deleted_children_impl(owner_user_id, parent_id)
+      .await
+      .map_err(RepoError::from)
+  }
+
+  /// 指定した名前の active ノードが同フォルダ内に存在するか確認する。
+  /// 復元時の同名衝突チェックに使う。
+  /// parent_id が None の場合はルート直下を確認する。
+  async fn exists_active_with_name(
+    &self,
+    owner_user_id: &UserId,
+    parent_id: Option<&NodeId>,
+    name: &str,
+  ) -> RepoResult<bool> {
+    self
+      .exists_active_with_name_impl(owner_user_id, parent_id, name)
+      .await
+      .map_err(RepoError::from)
+  }
+
+  /// 指定ノードと配下の deleted_at を NULL に戻す(論理削除解除)。
+  async fn restore_with_descendants(
+    &self,
+    id: &NodeId,
+    updated_at: DateTime<Utc>,
+  ) -> RepoResult<()> {
+    self
+      .restore_with_descendants_impl(id, updated_at)
+      .await
+      .map_err(RepoError::from)
+  }
+
+  /// 名前の部分一致検索(active かつ未削除のみ、大文字小文字を無視)。
+  async fn search_by_name(&self, owner_user_id: &UserId, query: &str) -> RepoResult<Vec<Node>> {
+    self
+      .search_by_name_impl(owner_user_id, query)
+      .await
+      .map_err(RepoError::from)
+  }
+
+  /// 指定ノードと配下の NodeId を全件返す(自身を含む)。
+  /// 物理削除前に削除対象 ID を収集するために使う。
+  async fn collect_descendant_ids(&self, id: &NodeId) -> RepoResult<Vec<NodeId>> {
+    self
+      .collect_descendant_ids_impl(id)
+      .await
+      .map_err(RepoError::from)
+  }
+
+  /// 複数の NodeId を一括物理削除する。
+  /// file_contents は ON DELETE CASCADE で連動削除される。
+  async fn hard_delete_many(&self, ids: &[NodeId]) -> RepoResult<()> {
+    self
+      .hard_delete_many_impl(ids)
+      .await
+      .map_err(RepoError::from)
+  }
+
+  /// active フォルダ数を返す。Dashboard 集計に使う。
+  async fn count_active_folders(&self, owner_user_id: &UserId) -> RepoResult<i64> {
+    self
+      .count_active_folders_impl(owner_user_id)
+      .await
+      .map_err(RepoError::from)
+  }
 }
 
 impl PgNodeRepository {
@@ -408,6 +489,284 @@ impl PgNodeRepository {
         .map(NodeId::from_uuid)
         .collect(),
     )
+  }
+
+  // impl PgNodeRepository に追加
+
+  async fn list_trash_roots_impl(&self, owner_user_id: &UserId) -> InfraResult<Vec<Node>> {
+    // 「直接ゴミ箱に入れたノード」を取得する。
+    // 削除されているが、親が active（deleted_at IS NULL）か、
+    // 親がいない（parent_id IS NULL）ノードが対象。
+    let rows = sqlx::query!(
+      r#"
+      SELECT
+        id,
+        owner_user_id,
+        parent_id,
+        name,
+        node_type,
+        status,
+        deleted_at,
+        created_at,
+        updated_at
+      FROM nodes
+      WHERE
+        owner_user_id = $1
+        AND deleted_at IS NOT NULL
+        AND (
+        parent_id IS NULL
+          OR EXISTS (
+            SELECT 1 FROM nodes p
+            WHERE p.id = nodes.parent_id
+              AND p.deleted_at IS NULL
+        )
+      )
+      ORDER BY deleted_at DESC
+      "#,
+      owner_user_id.as_uuid()
+    )
+    .fetch_all(&self.pool)
+    .await?;
+
+    rows
+      .into_iter()
+      .map(|r| {
+        map_node_row(
+          r.id,
+          r.owner_user_id,
+          r.parent_id,
+          r.name,
+          r.node_type,
+          r.status,
+          r.deleted_at,
+          r.created_at,
+          r.updated_at,
+        )
+      })
+      .collect()
+  }
+
+  async fn list_deleted_children_impl(
+    &self,
+    owner_user_id: &UserId,
+    parent_id: &NodeId,
+  ) -> InfraResult<Vec<Node>> {
+    let rows = sqlx::query!(
+      r#"
+      SELECT
+        id,
+        owner_user_id,
+        parent_id,
+        name,
+        node_type,
+        status,
+        deleted_at,
+        created_at,
+        updated_at
+      FROM nodes
+      WHERE
+        owner_user_id = $1
+        AND parent_id = $2
+        AND deleted_at IS NOT NULL
+      ORDER BY node_type DESC, name ASC
+      "#,
+      owner_user_id.as_uuid(),
+      parent_id.as_uuid()
+    )
+    .fetch_all(&self.pool)
+    .await?;
+
+    rows
+      .into_iter()
+      .map(|r| {
+        map_node_row(
+          r.id,
+          r.owner_user_id,
+          r.parent_id,
+          r.name,
+          r.node_type,
+          r.status,
+          r.deleted_at,
+          r.created_at,
+          r.updated_at,
+        )
+      })
+      .collect()
+  }
+
+  async fn exists_active_with_name_impl(
+    &self,
+    owner_user_id: &UserId,
+    parent_id: Option<&NodeId>,
+    name: &str,
+  ) -> InfraResult<bool> {
+    // IS NOT DISTINCT FROM を使うと NULL 同士も等値として扱える。
+    // これで parent_id = NULL（ルート直下）でも正しく動く。
+    let row = sqlx::query!(
+      r#"
+      SELECT EXISTS(
+        SELECT 1 FROM nodes
+        WHERE owner_user_id = $1
+          AND parent_id IS NOT DISTINCT FROM $2
+          AND name = $3
+          AND deleted_at IS NULL
+          AND status = 'active'
+        ) as "exists!"
+      "#,
+      owner_user_id.as_uuid(),
+      parent_id.map(|id| *id.as_uuid()),
+      name
+    )
+    .fetch_one(&self.pool)
+    .await?;
+
+    Ok(row.exists)
+  }
+
+  async fn restore_with_descendants_impl(
+    &self,
+    id: &NodeId,
+    updated_at: DateTime<Utc>,
+  ) -> InfraResult<()> {
+    sqlx::query!(
+      r#"
+      WITH RECURSIVE descendants AS (
+        SELECT id
+        FROM nodes
+        WHERE id = $1
+        UNION ALL
+        SELECT n.id FROM nodes n
+        INNER JOIN descendants d ON n.parent_id = d.id
+        )
+      UPDATE nodes
+      SET
+        deleted_at = NULL,
+        updated_at = $2
+      WHERE id IN (SELECT id FROM descendants)
+      "#,
+      id.as_uuid(),
+      updated_at,
+    )
+    .execute(&self.pool)
+    .await?;
+
+    Ok(())
+  }
+
+  async fn search_by_name_impl(
+    &self,
+    owner_user_id: &UserId,
+    query: &str,
+  ) -> InfraResult<Vec<Node>> {
+    // ILIKE で大文字小文字を無視した部分一致検索。
+    // 結果は最大 100 件に制限する。
+    let pattern = format!("%{}%", query);
+    let rows = sqlx::query!(
+      r#"
+      SELECT
+        id,
+        owner_user_id,
+        parent_id,
+        name,
+        node_type,
+        status,
+        deleted_at,
+        created_at,
+        updated_at
+      FROM nodes
+      WHERE
+        owner_user_id = $1
+          AND deleted_at IS NULL
+          AND status = 'active'
+          AND name ILIKE $2
+      ORDER BY node_type DESC, name ASC
+      LIMIT 100
+      "#,
+      owner_user_id.as_uuid(),
+      pattern
+    )
+    .fetch_all(&self.pool)
+    .await?;
+
+    rows
+      .into_iter()
+      .map(|r| {
+        map_node_row(
+          r.id,
+          r.owner_user_id,
+          r.parent_id,
+          r.name,
+          r.node_type,
+          r.status,
+          r.deleted_at,
+          r.created_at,
+          r.updated_at,
+        )
+      })
+      .collect()
+  }
+
+  async fn collect_descendant_ids_impl(&self, id: &NodeId) -> InfraResult<Vec<NodeId>> {
+    // 自身を含む全子孫の NodeId を収集する。
+    let rows = sqlx::query!(
+      r#"
+      WITH RECURSIVE descendants AS (
+        SELECT id
+        FROM nodes
+        WHERE id = $1
+        UNION ALL
+        SELECT n.id
+        FROM nodes n
+        INNER JOIN descendants d ON n.parent_id = d.id
+        )
+      SELECT id as "id!"
+      FROM descendants
+      "#,
+      id.as_uuid()
+    )
+    .fetch_all(&self.pool)
+    .await?;
+
+    Ok(rows.into_iter().map(|r| NodeId::from_uuid(r.id)).collect())
+  }
+
+  async fn hard_delete_many_impl(&self, ids: &[NodeId]) -> InfraResult<()> {
+    if ids.is_empty() {
+      return Ok(());
+    }
+    // NodeId を Uuid に変換して配列として渡す。
+    // file_contents は ON DELETE CASCADE で自動削除される。
+    let uuids: Vec<Uuid> = ids.iter().map(|id| *id.as_uuid()).collect();
+    sqlx::query!(
+      r#"
+      DELETE
+      FROM nodes
+      WHERE id = ANY($1)
+      "#,
+      &uuids[..] as &[Uuid]
+    )
+    .execute(&self.pool)
+    .await?;
+
+    Ok(())
+  }
+
+  async fn count_active_folders_impl(&self, owner_user_id: &UserId) -> InfraResult<i64> {
+    let row = sqlx::query!(
+      r#"
+      SELECT COUNT(*) as "count!"
+      FROM nodes
+      WHERE owner_user_id = $1
+        AND deleted_at IS NULL
+        AND status = 'active'
+        AND node_type = 'folder'
+      "#,
+      owner_user_id.as_uuid()
+    )
+    .fetch_one(&self.pool)
+    .await?;
+
+    Ok(row.count)
   }
 }
 

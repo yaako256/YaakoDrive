@@ -6,11 +6,12 @@ postgresのFileContentRepository実体を定義
 // 外部クレート
 use async_trait::async_trait;
 use sqlx::PgPool;
+use uuid::Uuid;
 
 // 内部ライブラリ
-use identity::NodeId;
+use identity::{NodeId, UserId};
 use node::model::{FileContent, FileContentStatus};
-use repository::{FileContentRepository, RepoError, RepoResult};
+use repository::{FileContentRepository, MimeStat, RepoError, RepoResult, UsageStats};
 
 // 自クレート
 // エラー型伝搬用
@@ -56,6 +57,23 @@ impl FileContentRepository for PgFileContentRepository {
   async fn hard_delete(&self, node_id: &NodeId) -> RepoResult<()> {
     self
       .hard_delete_impl(node_id)
+      .await
+      .map_err(RepoError::from)
+  }
+
+  async fn find_stored_filenames_by_node_ids(
+    &self,
+    node_ids: &[NodeId],
+  ) -> RepoResult<Vec<String>> {
+    self
+      .find_stored_filenames_by_node_ids_impl(node_ids)
+      .await
+      .map_err(RepoError::from)
+  }
+
+  async fn get_usage_stats(&self, owner_user_id: &UserId) -> RepoResult<UsageStats> {
+    self
+      .get_usage_stats_impl(owner_user_id)
       .await
       .map_err(RepoError::from)
   }
@@ -185,5 +203,79 @@ impl PgFileContentRepository {
     // sqlx::query!はPgQueryResult
     // InfraResultとして返す
     Ok(())
+  }
+
+  async fn find_stored_filenames_by_node_ids_impl(
+    &self,
+    node_ids: &[NodeId],
+  ) -> InfraResult<Vec<String>> {
+    if node_ids.is_empty() {
+      return Ok(vec![]);
+    }
+    let uuids: Vec<Uuid> = node_ids.iter().map(|id| *id.as_uuid()).collect();
+    let rows = sqlx::query!(
+      r#"
+        SELECT stored_filename
+        FROM file_contents
+        WHERE node_id = ANY($1)
+        "#,
+      &uuids[..] as &[Uuid]
+    )
+    .fetch_all(&self.pool)
+    .await?;
+
+    Ok(rows.into_iter().map(|r| r.stored_filename).collect())
+  }
+
+  async fn get_usage_stats_impl(&self, owner_user_id: &UserId) -> InfraResult<UsageStats> {
+    // 使用容量とファイル数を取得する。
+    let totals = sqlx::query!(
+      r#"
+      SELECT
+        COALESCE(SUM(fc.size_bytes), 0) as "total_bytes!: i64",
+        COUNT(fc.node_id)::BIGINT       as "file_count!: i64"
+      FROM nodes n
+      JOIN file_contents fc ON fc.node_id = n.id
+      WHERE n.owner_user_id = $1
+        AND n.deleted_at IS NULL
+        AND n.status = 'active'
+        AND fc.status = 'active'
+      "#,
+      owner_user_id.as_uuid()
+    )
+    .fetch_one(&self.pool)
+    .await?;
+
+    // MIME Type ごとのファイル数を取得する。
+    let mime_rows = sqlx::query!(
+      r#"
+      SELECT
+        fc.mime_type as "mime_type!",
+        COUNT(*)::BIGINT as "count!: i64"
+      FROM nodes n
+      JOIN file_contents fc ON fc.node_id = n.id
+      WHERE n.owner_user_id = $1
+        AND n.deleted_at IS NULL
+        AND n.status = 'active'
+        AND fc.status = 'active'
+      GROUP BY fc.mime_type
+      ORDER BY COUNT(*) DESC
+      "#,
+      owner_user_id.as_uuid()
+    )
+    .fetch_all(&self.pool)
+    .await?;
+
+    Ok(UsageStats {
+      total_bytes: totals.total_bytes,
+      file_count: totals.file_count,
+      mime_stats: mime_rows
+        .into_iter()
+        .map(|r| MimeStat {
+          mime_type: r.mime_type,
+          count: r.count,
+        })
+        .collect(),
+    })
   }
 }

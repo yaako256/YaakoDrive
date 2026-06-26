@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      SELECT COUNT(*) as \"count!\"\n      FROM nodes\n      WHERE owner_user_id = $1\n        AND deleted_at IS NULL\n        AND status = 'active'\n        AND node_type = 'folder'\n      ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "5234d3d3464334b33bcaeb972a6889f487f08ced524578c256c6f87552a4bd3c"
+}

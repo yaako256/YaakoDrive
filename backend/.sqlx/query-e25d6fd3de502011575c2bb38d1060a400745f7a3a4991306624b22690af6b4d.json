@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      WITH RECURSIVE descendants AS (\n        SELECT id\n        FROM nodes\n        WHERE id = $1\n        UNION ALL\n        SELECT n.id FROM nodes n\n        INNER JOIN descendants d ON n.parent_id = d.id\n        )\n      UPDATE nodes\n      SET\n        deleted_at = NULL,\n        updated_at = $2\n      WHERE id IN (SELECT id FROM descendants)\n      ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e25d6fd3de502011575c2bb38d1060a400745f7a3a4991306624b22690af6b4d"
+}
