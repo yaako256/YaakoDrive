@@ -4,4 +4,4 @@ pub mod service;
 
 // 再エクスポート
 pub use error::StorageError;
-pub use service::StorageService;
+pub use service::{ByteStream, StorageService, TempFile};

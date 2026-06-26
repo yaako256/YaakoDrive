@@ -4,29 +4,26 @@ StorageServiceの実体定義
 ローカルに保存する場合の構造体を作成
 */
 
-//use bytes::Bytes;
-//use futures_core::Stream;
-//use std::pin::Pin;
-
 // 標準ライブラリ
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 // 外部クレート
 // ログ
-//use tracing::warn;
+use tracing::warn;
 // UUID
 use uuid::Uuid;
+// バイトを効率的に処理する
+use bytes::Bytes;
 // 非同期処理用
 use async_trait::async_trait;
 use futures_util::StreamExt;
-use tokio::io::AsyncWriteExt;
 use tokio_util::io::ReaderStream;
 
 // 自クレート
 // エラー型
 use crate::error::{StorageError, StorageResult};
 // トレイト型とストリームの型エイリアス
-use crate::service::{ByteStream, StorageService};
+use crate::service::{ByteStream, StorageService, TempFile};
 
 /// ローカルディスクへの保存実装
 pub struct LocalStorageService {
@@ -54,132 +51,79 @@ impl LocalStorageService {
     })
   }
 
-  // ファイル名をファイルパスにして取得
-  fn files_path(&self, filename: &str) -> PathBuf {
-    self.files_dir.join(filename)
-  }
-
-  // 一時ファイル名を一時ファイルパスにして取得
-  fn temp_path(&self, filename: &str) -> PathBuf {
-    self.temp_dir.join(filename)
-  }
-}
-
-#[async_trait]
-impl StorageService for LocalStorageService {
-  async fn save_temp_stream(
-    &self,
-    stream: ByteStream,
-    original_filename: &str,
-  ) -> StorageResult<String> {
+  fn temp_filename(original: &str) -> String {
     // 拡張子を保持した一時ファイル名を生成
     // ファイル名から拡張子のみを抽出
     // 例: aaa.txt → "txt"
     //     README → ""
-    let ext = Path::new(original_filename)
+    let ext = std::path::Path::new(original)
       .extension()
       .and_then(|e| e.to_str())
       .unwrap_or("");
 
     // 仮ファイル名を作成
     // 拡張子がNoneの時は"."を2重にしない
-    let temp_filename = if ext.is_empty() {
+    if ext.is_empty() {
       format!("{}.tmp", Uuid::new_v4())
     } else {
       format!("{}.{}.tmp", Uuid::new_v4(), ext)
-    };
-
-    // ファイル名を一時ファイル場所のパスにする
-    let temp_path = self.temp_path(&temp_filename);
-
-    // 一時ファイルを作成
-    let mut file = tokio::fs::File::create(&temp_path).await?;
-
-    // ストリームからバイト列を受け取ってファイルへ書き込む
-    // ストリームからデータ（チャンク）を1つずつ取り出してループする
-    // 次のデータがある（Some）限り、変数 chunk に代入して中身を実行する
-    let mut pinned = stream;
-    // ストリームの書き込み処理
-    while let Some(chunk) = {
-      // ここは条件式(パターンマッチング)の一部
-      // ここの戻り値がSome(chunk)ならループ(真)
-      pinned.next().await
-    } {
-      // ループ処理
-      // リザルト型の取り外し
-      let chunk = chunk?;
-      // ファイル書き込み
-      file.write_all(&chunk).await?;
     }
+  }
+}
 
-    // ファイルの書き込み切る
-    // 安全にディスク処理をする
-    file.flush().await?;
-
-    // 一時ファイル名を返す
-    Ok(temp_filename)
+#[async_trait]
+impl StorageService for LocalStorageService {
+  async fn save_temp(&self, data: Bytes, original_filename: &str) -> StorageResult<TempFile> {
+    let filename = Self::temp_filename(original_filename);
+    let path = self.temp_dir.join(&filename);
+    let size_bytes = data.len() as u64;
+    tokio::fs::write(&path, &data).await?;
+    Ok(TempFile {
+      filename,
+      size_bytes,
+    })
   }
 
-  async fn promote_file(&self, temp_filename: &str, final_filename: &str) -> StorageResult<()> {
-    // 一時ファイルのパスを取得
-    let temp_path = self.temp_path(temp_filename);
-    // 本番ファイルのパスを取得
-    let final_path = self.files_path(final_filename);
-
-    // 本番場所に移動・上書きをする(rename)
-    // 同一ファイルシステム内ならrenameが原子的に動く
-    tokio::fs::rename(&temp_path, &final_path).await?;
-
+  async fn promote(&self, temp_filename: &str, final_filename: &str) -> StorageResult<()> {
+    let src = self.temp_dir.join(temp_filename);
+    let dst = self.files_dir.join(final_filename);
+    // 同一ファイルシステム内なら rename は原子的に動く
+    tokio::fs::rename(&src, &dst).await?;
     Ok(())
   }
 
-  async fn delete_file(&self, stored_filename: &str) -> StorageResult<()> {
-    // ファイルパスを取得
-    let path = self.files_path(stored_filename);
-
-    // パスが存在することを確認
-    if path.exists() {
-      // ファイルを物理削除する
-      tokio::fs::remove_file(path).await?;
+  async fn delete(&self, filename: &str) -> StorageResult<()> {
+    let path = self.files_dir.join(filename);
+    match tokio::fs::remove_file(&path).await {
+      Ok(()) => Ok(()),
+      Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+        warn!("delete: ファイルが見つからない: {}", filename);
+        Ok(())
+      }
+      Err(e) => Err(StorageError::Io(e)),
     }
-
-    Ok(())
   }
 
-  async fn open_file_stream(&self, stored_filename: &str) -> StorageResult<ByteStream> {
-    // ファイルパスの取得
-    let path = self.files_path(stored_filename);
-
-    // ファイルが存在しているかの確認
-    if !path.exists() {
-      return Err(StorageError::NotFound(stored_filename.to_string()));
+  async fn delete_temp(&self, temp_filename: &str) -> StorageResult<()> {
+    let path = self.temp_dir.join(temp_filename);
+    match tokio::fs::remove_file(&path).await {
+      Ok(()) => Ok(()),
+      Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+      Err(e) => Err(StorageError::Io(e)),
     }
-
-    // ファイルを開く
-    let file = tokio::fs::File::open(path).await?;
-
-    // ファイルをストリームで開く
-    let stream = ReaderStream::new(file);
-
-    // streamは通常のResult型なので
-    // Error型をStorageError型に変換することで
-    // StorageResult型にする
-    let mapped = stream.map(|r| r.map_err(StorageError::Io));
-
-    // ByteStream型として返す
-    Ok(Box::pin(mapped))
   }
 
-  async fn delete_temp_file(&self, temp_filename: &str) -> StorageResult<()> {
-    // 一時ファイルパスの取得
-    let path = self.temp_path(temp_filename);
-
-    // パスが存在するかの確認
-    if path.exists() {
-      // 一時ファイルを物理削除
-      tokio::fs::remove_file(path).await?;
-    }
-
-    Ok(())
+  async fn open_stream(&self, filename: &str) -> StorageResult<ByteStream> {
+    let path = self.files_dir.join(filename);
+    let file = tokio::fs::File::open(&path).await.map_err(|e| {
+      if e.kind() == std::io::ErrorKind::NotFound {
+        StorageError::NotFound(filename.to_string())
+      } else {
+        StorageError::Io(e)
+      }
+    })?;
+    // ReaderStream を StorageError へ変換してピン留め
+    let stream = ReaderStream::new(file).map(|r| r.map_err(StorageError::Io));
+    Ok(Box::pin(stream))
   }
 }

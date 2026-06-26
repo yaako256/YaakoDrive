@@ -16,9 +16,9 @@ use bytes::Bytes;
 use futures_core::Stream;
 
 // 自クレート
-use crate::error::StorageResult;
+use crate::error::{StorageError, StorageResult};
 
-/// ストリームの型エイリアス
+/// ダウンロード時のファイルストリーム型
 /// Pin: メモリ上の位置を固定
 /// Box: ヒープメモリに迷子にならないように格納
 /// Stream: 順番に流す(ストリーム)
@@ -26,25 +26,28 @@ use crate::error::StorageResult;
 /// Send: マルチスレッド間を安全に行き来できる
 pub type ByteStream = Pin<Box<dyn Stream<Item = StorageResult<Bytes>> + Send>>;
 
+/// save_temp の戻り値。ファイル名とサイズをまとめて返す
+pub struct TempFile {
+  /// tmp ディレクトリ内のファイル名
+  pub filename: String,
+  /// 保存されたバイト数
+  pub size_bytes: u64,
+}
+
 #[async_trait]
 pub trait StorageService: Send + Sync {
-  /// ストリームを一時ファイルに保存する
-  /// 戻り値は一時ファイル名
-  async fn save_temp_stream(
-    &self,
-    stream: ByteStream,
-    original_filename: &str,
-  ) -> StorageResult<String>;
+  /// バイト列を一時ファイルに保存する。TempFile を返す
+  async fn save_temp(&self, data: Bytes, original_filename: &str) -> StorageResult<TempFile>;
 
   /// 一時ファイルを正式な場所へ移動する
-  async fn promote_file(&self, temp_filename: &str, final_filename: &str) -> StorageResult<()>;
+  async fn promote(&self, temp_filename: &str, final_filename: &str) -> StorageResult<()>;
 
-  /// ファイルを削除する
-  async fn delete_file(&self, stored_filename: &str) -> StorageResult<()>;
+  /// 正式ファイルを削除する
+  async fn delete(&self, filename: &str) -> StorageResult<()>;
 
-  /// ファイルをストリームとして開く
-  async fn open_file_stream(&self, stored_filename: &str) -> StorageResult<ByteStream>;
+  /// 一時ファイルを削除する（失敗は呼び出し元が無視してよい）
+  async fn delete_temp(&self, temp_filename: &str) -> StorageResult<()>;
 
-  /// 一時ファイルを削除する（クリーンアップ用）
-  async fn delete_temp_file(&self, temp_filename: &str) -> StorageResult<()>;
+  /// ファイルを ByteStream として開く
+  async fn open_stream(&self, filename: &str) -> StorageResult<ByteStream>;
 }
