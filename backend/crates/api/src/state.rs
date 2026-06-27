@@ -9,10 +9,8 @@ use std::sync::Arc;
 // 内部クレート
 use auth::jwt::JwtService;
 use config::AppConfig;
-use infra::postgres::{
-  file_content_repository::PgFileContentRepository, node_repository::PgNodeRepository,
-  refresh_token_repository::PgRefreshTokenRepository, unit_of_work::PgUnitOfWork,
-  user_repository::PgUserRepository,
+use repository::{
+  FileContentRepository, NodeRepository, RefreshTokenRepository, UnitOfWork, UserRepository,
 };
 use storage::StorageService;
 
@@ -27,11 +25,11 @@ pub struct AppState {
   // 認証
   pub jwt_service: Arc<JwtService>,
   // DB
-  pub user_repo: Arc<PgUserRepository>,
-  pub refresh_token_repo: Arc<PgRefreshTokenRepository>,
-  pub node_repo: Arc<PgNodeRepository>,
-  pub file_content_repo: Arc<PgFileContentRepository>,
-  pub uow: Arc<PgUnitOfWork>,
+  pub user_repo: Arc<dyn UserRepository>,
+  pub refresh_token_repo: Arc<dyn RefreshTokenRepository>,
+  pub node_repo: Arc<dyn NodeRepository>,
+  pub file_content_repo: Arc<dyn FileContentRepository>,
+  pub uow: Arc<dyn UnitOfWork>,
   // file
   pub storage: Arc<dyn StorageService>,
   pub download_tokens: DownloadTokenStore,

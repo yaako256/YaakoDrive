@@ -12,7 +12,6 @@ use uuid::Uuid;
 
 // 内部ライブラリ
 use identity::NodeId;
-use repository::{FileContentRepository, NodeRepository};
 
 use app::usecase::file::{
   download::{GetDownloadInfoInput, GetDownloadInfoUseCase},

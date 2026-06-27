@@ -18,7 +18,6 @@ use app::usecase::trash::{
   restore_node::{RestoreNodeInput, RestoreNodeUseCase},
 };
 use identity::NodeId;
-use repository::NodeRepository;
 
 // 自クレート
 use crate::{

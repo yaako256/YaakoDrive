@@ -9,7 +9,6 @@ app = { path = "../app" }
 auth = { path = "../auth" }
 config = { path = "../config" }
 identity = { path = "../identity" }
-infra = { path = "../infra" }
 repository = { path = "../repository" }
 node = { path = "../node" }
 storage = { path = "../storage" }
