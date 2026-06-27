@@ -38,7 +38,7 @@ impl<'a> GetNodeUseCase<'a> {
       .ok_or(AppError::NotFound("node not found".to_string()))?;
 
     // 他ユーザのノードは見えない
-    if node.is_owner(&input.requester_user_id) {
+    if !node.is_owner(&input.requester_user_id) {
       return Err(AppError::NotFound("node not found".to_string()));
     }
 

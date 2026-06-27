@@ -37,7 +37,7 @@ impl<'a> RestoreNodeUseCase<'a> {
       .ok_or_else(|| AppError::NotFound("node not found".to_string()))?;
 
     // 権限チェック
-    if node.is_owner(&input.requester_user_id) {
+    if !node.is_owner(&input.requester_user_id) {
       return Err(AppError::NotFound("node not found".to_string()));
     }
 
@@ -62,20 +62,23 @@ impl<'a> RestoreNodeUseCase<'a> {
 
     // Node型をゴミ箱から戻す
     let mut restored_node = node;
-    // 名前を変更する場合はする
-    if let Some(name) = input.new_name {
-      restored_node.rename(name)?;
-      // 名前更新のためにupdate
-      self.node_repo.update(&restored_node).await?;
-    }
-    // Node型をゴミ箱から戻す
     restored_node.restore()?;
+
+    // 名前を変更する場合はする
+    if let Some(name) = input.new_name.clone() {
+      restored_node.rename(name)?;
+    }
 
     // deleted_at を NULL に戻す（配下含む）
     self
       .node_repo
       .restore_with_descendants(restored_node.id(), *restored_node.updated_at())
       .await?;
+
+    // 名前更新のためにupdate
+    if input.new_name.is_some() {
+      self.node_repo.update(&restored_node).await?;
+    }
 
     Ok(restored_node)
   }

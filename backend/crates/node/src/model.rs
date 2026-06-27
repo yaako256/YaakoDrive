@@ -232,8 +232,8 @@ impl Node {
 
   /// 移動できるかどうか
   /// 祖先一覧と比較して循環を防ぐ
-  pub fn ensure_can_move_node(&self, new_parent: NodeId, ancestors: &[NodeId]) -> NodeResult<()> {
-    if ancestors.contains(&new_parent) {
+  pub fn ensure_can_move_node(&self, ancestors: &[NodeId]) -> NodeResult<()> {
+    if ancestors.contains(self.id()) {
       return Err(NodeError::CircularMove);
     }
 

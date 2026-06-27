@@ -42,7 +42,7 @@ impl<'a> MoveNodeUseCase<'a> {
       .ok_or(AppError::NotFound("node not found".to_string()))?;
 
     // 他ユーザのNodeは移動できない
-    if node.is_owner(&input.requester_user_id) {
+    if !node.is_owner(&input.requester_user_id) {
       return Err(AppError::NotFound("node not found".to_string()));
     }
 
@@ -89,7 +89,7 @@ impl<'a> MoveNodeUseCase<'a> {
       // 循環チェック: 移動先が自分の子孫でないか確認
       // 自身の子孫には移動できない
       let ancestor_ids = self.node_repo.find_ancestor_ids(new_parent_id).await?;
-      node.ensure_can_move_node(*new_parent_id, &ancestor_ids)?;
+      node.ensure_can_move_node(&ancestor_ids)?;
     }
 
     // 親NodeIdの置き換え
