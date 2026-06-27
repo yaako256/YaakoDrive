@@ -70,7 +70,7 @@ impl<'a> GetDashboardUseCase<'a> {
 
     Ok(DashboardOutput {
       used_bytes: usage.total_bytes,
-      limit_bytes: user.storage_limit_bytes,
+      limit_bytes: *user.storage_limit_bytes(),
       file_count: usage.file_count,
       folder_count,
       mime_stats: usage

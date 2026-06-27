@@ -1,6 +1,6 @@
 /*
-backend/crates/app/src/usecase/file/download.rs
-ダウンロードユースケース
+backend/crates/app/src/usecase/file/download_url.rs
+ダウンロードURLを発行するユースケース
 */
 
 // 外部クレート
@@ -10,23 +10,23 @@ use repository::{FileContentRepository, NodeRepository};
 // 自クレート
 use crate::error::{AppError, AppResult};
 
-pub struct DownloadFileInput {
+pub struct GetDownloadUrlInput {
   pub node_id: NodeId,
   pub requester_user_id: UserId,
 }
 
-pub struct DownloadFileOutput {
+pub struct GetDownloadUrlOutput {
   pub stored_filename: String,
   pub original_name: String,
   pub mime_type: String,
 }
 
-pub struct DownloadFileUseCase<'a> {
+pub struct GetDownloadUrlUseCase<'a> {
   node_repo: &'a dyn NodeRepository,
   file_content_repo: &'a dyn FileContentRepository,
 }
 
-impl<'a> DownloadFileUseCase<'a> {
+impl<'a> GetDownloadUrlUseCase<'a> {
   pub fn new(
     node_repo: &'a dyn NodeRepository,
     file_content_repo: &'a dyn FileContentRepository,
@@ -37,15 +37,13 @@ impl<'a> DownloadFileUseCase<'a> {
     }
   }
 
-  pub async fn execute(&self, input: DownloadFileInput) -> AppResult<DownloadFileOutput> {
+  pub async fn execute(&self, input: GetDownloadUrlInput) -> AppResult<GetDownloadUrlOutput> {
     let node = self
       .node_repo
       .find_by_id(&input.node_id)
       .await?
       .ok_or_else(|| AppError::NotFound("node not found".to_string()))?;
 
-    // URL発行時に権限確認済だが
-    // 保険でここでも確認する
     if !node.is_owner(&input.requester_user_id) {
       return Err(AppError::NotFound("node not found".to_string()));
     }
@@ -62,7 +60,7 @@ impl<'a> DownloadFileUseCase<'a> {
       .await?
       .ok_or_else(|| AppError::NotFound("file content not found".to_string()))?;
 
-    Ok(DownloadFileOutput {
+    Ok(GetDownloadUrlOutput {
       stored_filename: content.stored_filename().to_string(),
       original_name: node.name().to_string(),
       mime_type: content.mime_type().to_string(),

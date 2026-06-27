@@ -41,36 +41,36 @@ impl<'a> HardDeleteNodeUseCase<'a> {
       .ok_or_else(|| AppError::NotFound("node not found".to_string()))?;
 
     // 権限チェック
-    if node.owner_user_id != input.requester_user_id {
+    if !node.is_owner(&input.requester_user_id) {
       return Err(AppError::NotFound("node not found".to_string()));
     }
 
-    // ゴミ箱内にあることを確認（物理削除はゴミ箱からのみ）
+    // ゴミ箱内にあることを確認(物理削除はゴミ箱からのみ)
     if !node.is_deleted() {
       return Err(AppError::InvalidInput(
         "node must be in trash before hard delete".to_string(),
       ));
     }
 
-    // ① 自身と配下の NodeId を収集する
+    // 自身と配下の NodeId を収集する
     let descendant_ids = self
       .node_repo
       .collect_descendant_ids(&input.node_id)
       .await?;
 
-    // ② 削除対象の実ファイル名を収集する（DB 削除前に取得する必要がある）
+    // 削除対象の実ファイル名を収集する(DB 削除前に取得する必要がある)
     let stored_filenames = self
       .file_content_repo
       .find_stored_filenames_by_node_ids(&descendant_ids)
       .await?;
 
-    // ③ DB から nodes を物理削除する
-    //    file_contents は ON DELETE CASCADE で自動削除される
+    // DB から nodes を物理削除する
+    // file_contents は ON DELETE CASCADE で自動削除される
     self.node_repo.hard_delete_many(&descendant_ids).await?;
 
-    // ④ 実ファイルを削除する
-    //    DB 削除成功後のファイル削除失敗は孤立ファイルとして残る。
-    //    CLI の check-storage-consistency で検出・修復する設計のためエラーにしない。
+    // 実ファイルを削除する
+    // DB 削除成功後のファイル削除失敗は孤立ファイルとして残る。
+    // CLI の check-storage-consistency で検出・修復する設計のためエラーにしない。
     for filename in &stored_filenames {
       if let Err(e) = self.storage.delete(filename).await {
         warn!(

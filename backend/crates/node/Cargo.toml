@@ -11,3 +11,4 @@ identity = { path = "../identity" }
 thiserror = { workspace = true }
 serde = { workspace = true }
 chrono = { workspace = true }
+uuid = { workspace = true }

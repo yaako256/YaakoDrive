@@ -12,10 +12,10 @@ use uuid::Uuid;
 
 // 内部ライブラリ
 use identity::NodeId;
-use repository::{FileContentRepository, NodeRepository};
 
 use app::usecase::file::{
-  download::{GetDownloadInfoInput, GetDownloadInfoUseCase},
+  download::{DownloadFileInput, DownloadFileUseCase},
+  download_url::{GetDownloadUrlInput, GetDownloadUrlUseCase},
   upload::{UploadFileInput, UploadFileUseCase},
 };
 
@@ -39,7 +39,21 @@ async fn extract_upload_field(
     .map_err(|e| ApiAppError::from(app::AppError::InvalidInput(e.to_string())))?
     .ok_or_else(|| ApiAppError::from(app::AppError::InvalidInput("no file field".to_string())))?;
 
-  let filename = field.file_name().unwrap_or("unknown").to_string();
+  let filename = field
+    .file_name()
+    .ok_or_else(|| {
+      ApiAppError::from(app::AppError::InvalidInput(
+        "filename is required".to_string(),
+      ))
+    })?
+    .to_string();
+
+  if filename.is_empty() {
+    return Err(ApiAppError::from(app::AppError::InvalidInput(
+      "filename cannot be empty".to_string(),
+    )));
+  }
+
   let data = field
     .bytes()
     .await
@@ -126,9 +140,9 @@ pub async fn download_url_handler(
 
   // 権限とファイル存在を確認してからトークンを発行
   let usecase =
-    GetDownloadInfoUseCase::new(state.node_repo.as_ref(), state.file_content_repo.as_ref());
+    GetDownloadUrlUseCase::new(state.node_repo.as_ref(), state.file_content_repo.as_ref());
   usecase
-    .execute(GetDownloadInfoInput {
+    .execute(GetDownloadUrlInput {
       node_id,
       requester_user_id: user_id,
     })
@@ -144,32 +158,32 @@ pub async fn download_url_handler(
 // ─── GET /api/files/download/{token} ─────────────────────
 pub async fn download_handler(
   State(state): State<AppState>,
+  AuthenticatedUser(claims): AuthenticatedUser,
   Path(token): Path<String>,
 ) -> Result<impl IntoResponse, ApiAppError> {
+  let user_id = parse_user_id(&claims.sub)?;
   let node_id = state.download_tokens.consume(&token).ok_or_else(|| {
     ApiAppError::from(app::AppError::NotFound(
       "invalid or expired token".to_string(),
     ))
   })?;
 
-  // token 発行時に権限確認済みのため、ここでは直接取得する
-  let content = state
-    .file_content_repo
-    .find_by_node_id(&node_id)
+  // 権限とファイル存在を確認してからトークンを発行
+  let usecase =
+    DownloadFileUseCase::new(state.node_repo.as_ref(), state.file_content_repo.as_ref());
+  let output = usecase
+    .execute(DownloadFileInput {
+      node_id,
+      requester_user_id: user_id,
+    })
     .await
-    .map_err(|e| ApiAppError::from(app::AppError::from(e)))?
-    .ok_or_else(|| ApiAppError::from(app::AppError::NotFound("file not found".to_string())))?;
+    .map_err(ApiAppError::from)?;
 
-  let node = state
-    .node_repo
-    .find_by_id(&node_id)
-    .await
-    .map_err(|e| ApiAppError::from(app::AppError::from(e)))?
-    .ok_or_else(|| ApiAppError::from(app::AppError::NotFound("node not found".to_string())))?;
-
+  // storageの方はaxumを使っていてWeb感があるため
+  // UseCaseではなくこっちで定義
   let stream = state
     .storage
-    .open_stream(&content.stored_filename)
+    .open_stream(&output.stored_filename)
     .await
     .map_err(|e| ApiAppError::from(app::AppError::from(e)))?;
 
@@ -177,11 +191,11 @@ pub async fn download_handler(
     stream.map(|r| r.map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))),
   );
 
-  let filename_encoded = urlencoding::encode(&node.name).to_string();
+  let filename_encoded = urlencoding::encode(&output.original_name).to_string();
 
   Ok((
     [
-      (header::CONTENT_TYPE, content.mime_type),
+      (header::CONTENT_TYPE, output.mime_type),
       (
         header::CONTENT_DISPOSITION,
         format!("attachment; filename*=UTF-8''{}", filename_encoded),

@@ -101,7 +101,6 @@ dependencies = [
  "config 0.1.0",
  "futures-util",
  "identity",
- "infra",
  "node",
  "repository",
  "serde",
@@ -128,7 +127,6 @@ dependencies = [
  "mime_guess",
  "node",
  "repository",
- "sha2",
  "storage",
  "thiserror",
  "tracing",
@@ -190,6 +188,7 @@ dependencies = [
  "jsonwebtoken",
  "rand",
  "serde",
+ "sha2",
  "thiserror",
  "uuid",
 ]
@@ -1362,6 +1361,7 @@ dependencies = [
  "identity",
  "serde",
  "thiserror",
+ "uuid",
 ]
 
 [[package]]

@@ -5,24 +5,15 @@ pub mod list_children;
 pub mod move_node;
 pub mod rename_node;
 
-use crate::error::{AppError, AppResult};
+use crate::error::AppError;
+use repository::RepoError;
 
-// 複数のユースケースで使うため、mod.rsに書く
-/// 名前バリデーション共通関数
-pub fn validate_name(name: &str) -> AppResult<()> {
-  // 空の名前は使えない
-  if name.is_empty() {
-    return Err(AppError::InvalidInput("name is empty".to_string()));
+// エラー伝搬の定義
+pub fn map_name_conflict(e: RepoError) -> AppError {
+  match e {
+    repository::RepoError::Conflict(_) => {
+      AppError::AlreadyExists("same name already exists".to_string())
+    }
+    other => AppError::from(other),
   }
-  // 長すぎる名前は使えない
-  if name.len() > 255 {
-    return Err(AppError::InvalidInput("name is too long".to_string()));
-  }
-  // パス区切り文字を禁止
-  if name.contains('/') || name.contains('\\') {
-    return Err(AppError::InvalidInput(
-      "name contains invalid characters".to_string(),
-    ));
-  }
-  Ok(())
 }

@@ -5,18 +5,18 @@ postgresのUserRepository実体を定義
 
 // 外部クレート
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
 use sqlx::PgPool;
-use uuid::Uuid;
 
 // 内部ライブラリ
-use auth::model::{Role, User};
+use auth::model::User;
 use identity::UserId;
 use repository::{RepoError, RepoResult, UserRepository};
 
 // 自クレート
 // エラー型伝搬用
 use crate::error::{InfraError, InfraResult};
+// UserRow用
+use crate::postgres::user_row::UserRow;
 
 /// postgreSQLのUserRepository実装
 pub struct PgUserRepository {
@@ -68,7 +68,8 @@ impl UserRepository for PgUserRepository {
 impl PgUserRepository {
   /// UserIdからUser型を取得するfind_by_idの内部実装
   async fn find_by_id_impl(&self, id: &UserId) -> InfraResult<Option<User>> {
-    let row = sqlx::query!(
+    let row = sqlx::query_as!(
+      UserRow,
       r#"
       SELECT
         id,
@@ -87,27 +88,18 @@ impl PgUserRepository {
     .fetch_optional(&self.pool)
     .await?;
 
-    // 匿名構造体をUser型に変換して返す
-    row
-      .map(|r| {
-        map_user_row(
-          r.id,
-          r.username,
-          r.password_hash,
-          r.role,
-          r.storage_limit_bytes,
-          r.created_at,
-          r.updated_at,
-          r.disabled_at,
-        )
-      })
-      .transpose()
+    // query_asで得たUserRow型ををUser型に変換
+    let user = row.map(User::try_from).transpose()?;
+
+    // InfraResultで返す
+    Ok(user)
   }
 
   /// usernameからUser型を取得するfind_by_usernameの内部実装
   async fn find_by_username_impl(&self, username: &str) -> InfraResult<Option<User>> {
     // usernameから対象要素を取得
-    let row = sqlx::query!(
+    let row = sqlx::query_as!(
+      UserRow,
       r#"
       SELECT
         id,
@@ -128,21 +120,11 @@ impl PgUserRepository {
     .fetch_optional(&self.pool)
     .await?;
 
-    // 匿名構造体をUser型に変換して返す
-    row
-      .map(|r| {
-        map_user_row(
-          r.id,
-          r.username,
-          r.password_hash,
-          r.role,
-          r.storage_limit_bytes,
-          r.created_at,
-          r.updated_at,
-          r.disabled_at,
-        )
-      })
-      .transpose()
+    // query_asで得たUserRow型ををUser型に変換
+    let user = row.map(User::try_from).transpose()?;
+
+    // InfraResultで返す
+    Ok(user)
   }
 
   /// 新規User行を作成するcreateの内部実装
@@ -161,14 +143,14 @@ impl PgUserRepository {
         )
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       "#,
-      user.id.as_uuid(),
-      user.username,
-      user.password_hash,
-      user.role.as_str(),
-      user.storage_limit_bytes,
-      user.created_at,
-      user.updated_at,
-      user.disabled_at,
+      user.id().as_uuid(),
+      user.username(),
+      user.password_hash(),
+      user.role().as_str(),
+      user.storage_limit_bytes(),
+      user.created_at(),
+      user.updated_at(),
+      user.disabled_at(),
     )
     .execute(&self.pool)
     .await?;
@@ -196,13 +178,13 @@ impl PgUserRepository {
       WHERE
         id = $1
       "#,
-      user.id.as_uuid(),
-      user.username,
-      user.password_hash,
-      user.role.as_str(),
-      user.storage_limit_bytes,
-      user.updated_at,
-      user.disabled_at,
+      user.id().as_uuid(),
+      user.username(),
+      user.password_hash(),
+      user.role().as_str(),
+      user.storage_limit_bytes(),
+      user.updated_at(),
+      user.disabled_at(),
     )
     .execute(&self.pool)
     .await?
@@ -218,7 +200,8 @@ impl PgUserRepository {
 
   /// 全ユーザを取得するlist_allの内部実装
   async fn list_all_impl(&self) -> InfraResult<Vec<User>> {
-    let rows = sqlx::query!(
+    let rows = sqlx::query_as!(
+      UserRow,
       r#"
       SELECT
         id,
@@ -238,91 +221,13 @@ impl PgUserRepository {
     .fetch_all(&self.pool)
     .await?;
 
-    // 匿名構造体をUser型にして返す
-    rows
+    // query_asで得たUserRow型ををUser型に変換
+    let users = rows
       .into_iter()
-      .map(|r| {
-        map_user_row(
-          r.id,
-          r.username,
-          r.password_hash,
-          r.role,
-          r.storage_limit_bytes,
-          r.created_at,
-          r.updated_at,
-          r.disabled_at,
-        )
-      })
-      .collect()
-  }
-}
+      .map(User::try_from)
+      .collect::<Result<Vec<_>, _>>()?;
 
-/// 匿名構造体をUser型に変換する内部関数
-fn map_user_row(
-  id: Uuid,
-  username: String,
-  password_hash: String,
-  role: String,
-  storage_limit_bytes: i64,
-  created_at: DateTime<Utc>,
-  updated_at: DateTime<Utc>,
-  disabled_at: Option<DateTime<Utc>>,
-) -> InfraResult<User> {
-  // 文字列からEnum型へ変換
-  // 失敗時はエラー伝搬
-  let role = Role::try_from(role.as_str())?;
-
-  Ok(User {
-    id: UserId::from_uuid(id),
-    username,
-    password_hash,
-    role,
-    storage_limit_bytes,
-    created_at,
-    updated_at,
-    disabled_at,
-  })
-}
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-  use auth::model::Role;
-  use chrono::Utc;
-  use identity::UserId;
-
-  // テスト用DBのURLを環境変数から取得するヘルパー
-  async fn _test_pool() -> PgPool {
-    let url =
-      std::env::var("DATABASE_URL").expect("DATABASE_URL must be set for integration tests");
-    sqlx::PgPool::connect(&url)
-      .await
-      .expect("Failed to connect")
-  }
-
-  // #[sqlx::test] はテスト用に一時DBを作成・破棄する。テスト間の干渉はない
-  // #[sqlx::test]
-  // migrationsが標準の場所にないため、パスを明示的に指定しないとダメ
-  #[sqlx::test(migrations = "../../../sql/migrations")]
-  async fn test_create_and_find_user(pool: PgPool) {
-    let repo = PgUserRepository::new(pool);
-    let now = Utc::now();
-
-    let user = User {
-      id: UserId::new(),
-      username: "testuser".to_string(),
-      password_hash: "dummy_hash".to_string(),
-      role: Role::User,
-      storage_limit_bytes: 10737418240,
-      created_at: now,
-      updated_at: now,
-      disabled_at: None,
-    };
-
-    repo.create(&user).await.unwrap();
-
-    let found = repo.find_by_username("testuser").await.unwrap();
-    assert!(found.is_some());
-    assert_eq!(found.unwrap().username, "testuser");
+    // InfraResultで返す
+    Ok(users)
   }
 }

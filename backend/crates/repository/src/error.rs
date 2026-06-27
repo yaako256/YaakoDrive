@@ -18,6 +18,12 @@ pub enum RepoError {
 
   #[error("database error: {0}")]
   Database(String),
+
+  #[error("node error: {0}")]
+  Node(String),
+
+  #[error("auth error: {0}")]
+  Auth(String),
 }
 
 /// repositoryクレートのリザルト

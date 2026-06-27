@@ -4,11 +4,11 @@ backend/crates/app/src/usecase/auth/logout.rs
 */
 
 // 内部クレート
+use auth::token::hash_token;
 use repository::RefreshTokenRepository;
 
 // 自クレート
 use crate::error::{AppError, AppResult};
-use crate::usecase::auth::hash_token;
 
 // ログアウトの入力
 pub struct LogoutInput {
@@ -39,7 +39,7 @@ impl<'a> LogoutUseCase<'a> {
       .ok_or(AppError::Unauthorized)?;
 
     // 失効させる(DB処理)
-    self.refresh_token_repo.revoke(&token.id).await?;
+    self.refresh_token_repo.revoke(token.id()).await?;
 
     Ok(())
   }

@@ -16,6 +16,8 @@ use repository::{RefreshTokenRepository, RepoError, RepoResult};
 // 自クレート
 // エラー型伝搬用
 use crate::error::{InfraError, InfraResult};
+// RefreshTokenRow用
+use crate::postgres::refresh_token_row::RefreshTokenRow;
 
 /// postgreSQLのRefreshTokenRepository実装
 pub struct PgRefreshTokenRepository {
@@ -74,7 +76,8 @@ impl PgRefreshTokenRepository {
   /// ハッシュ化されたRefreshTokenからRefreshTokenを取得find_by_token_hashの内部実装
   async fn find_by_token_hash_impl(&self, hash: &str) -> InfraResult<Option<RefreshToken>> {
     // RefreshTokenの取得
-    let row = sqlx::query!(
+    let row = sqlx::query_as!(
+      RefreshTokenRow,
       r#"
       SELECT
         id,
@@ -94,16 +97,11 @@ impl PgRefreshTokenRepository {
     .fetch_optional(&self.pool)
     .await?;
 
-    // 匿名構造体をRefreshToken型に戻して返す
-    Ok(row.map(|r| RefreshToken {
-      id: RefreshTokenId::from_uuid(r.id),
-      user_id: UserId::from_uuid(r.user_id),
-      token_hash: r.token_hash,
-      user_agent: r.user_agent,
-      expires_at: r.expires_at,
-      created_at: r.created_at,
-      revoked_at: r.revoked_at,
-    }))
+    // query_asで得たNodeRow型ををNode型に変換
+    let refresh_token = row.map(RefreshToken::try_from).transpose()?;
+
+    // InfraResultで返す
+    Ok(refresh_token)
   }
 
   /// 新規RefreshToken行を作成するcreateの内部実装
@@ -120,12 +118,12 @@ impl PgRefreshTokenRepository {
       )
       VALUES ($1, $2, $3, $4, $5, $6)
       "#,
-      token.id.as_uuid(),
-      token.user_id.as_uuid(),
-      token.token_hash,
-      token.user_agent,
-      token.expires_at,
-      token.created_at,
+      token.id().as_uuid(),
+      token.user_id().as_uuid(),
+      token.token_hash(),
+      token.user_agent(),
+      token.expires_at(),
+      token.created_at(),
     )
     .execute(&self.pool)
     .await?;

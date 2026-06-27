@@ -3,17 +3,13 @@ backend/crates/app/src/usecase/auth/refresh.rs
 RefreshTokenの更新をするユースケースを定義
 */
 
-// 外部クレート
-use chrono::{Duration, Utc};
-
 // 内部ライブラリ
-use auth::{jwt::JwtService, model::RefreshToken, token::generate_refresh_token};
-use identity::RefreshTokenId;
+use auth::token::hash_token;
+use auth::{jwt::JwtService, model::RefreshToken};
 use repository::{RefreshTokenRepository, UserRepository};
 
 // 自クレート
 use crate::error::{AppError, AppResult};
-use crate::usecase::auth::hash_token;
 
 pub struct RefreshInput {
   pub refresh_token: String,
@@ -65,7 +61,7 @@ impl<'a> RefreshUseCase<'a> {
     // ユーザ取得
     let user = self
       .user_repo
-      .find_by_id(&token.user_id)
+      .find_by_id(token.user_id())
       .await?
       .ok_or(AppError::Unauthorized)?;
 
@@ -74,33 +70,23 @@ impl<'a> RefreshUseCase<'a> {
     }
 
     // 旧Refresh Tokenをrevoke(ローテーション)
-    self.refresh_token_repo.revoke(&token.id).await?;
+    self.refresh_token_repo.revoke(token.id()).await?;
 
     // 新Access Token生成
     let access_token = self
       .jwt_service
-      .generate_access_token(&user.id, user.role.as_str())?;
+      .generate_access_token(user.id(), user.role().as_str())?;
 
     // 新Refresh Token生成
-    let raw_token = generate_refresh_token();
-    let token_hash = hash_token(&raw_token);
-
-    // 現在時刻取得
-    let now = Utc::now();
-
-    // 新しいRefreshToken型を作成
-    let new_refresh_token = RefreshToken {
-      id: RefreshTokenId::new(),
-      user_id: user.id,
-      token_hash,
-      user_agent: input.user_agent,
-      expires_at: now + Duration::seconds(input.refresh_token_expires_secs as i64),
-      created_at: now,
-      revoked_at: None,
-    };
+    // RefreshToken型を作成
+    let (raw_token, refresh_token) = RefreshToken::new(
+      *user.id(),
+      input.user_agent,
+      input.refresh_token_expires_secs,
+    );
 
     // DBに保存
-    self.refresh_token_repo.create(&new_refresh_token).await?;
+    self.refresh_token_repo.create(&refresh_token).await?;
 
     Ok(RefreshOutput {
       access_token,
