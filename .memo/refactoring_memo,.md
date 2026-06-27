@@ -1,98 +1,4 @@
-# リファクタリングメモ
-現在、backendが完成したところである。
-フロントエンド作成に向け、一旦リファクタリングを行おうと思う。
-その点をメモしていく。
-実際にすべてをリファクタリングするかは要検討である
-
-## Nodeが中心であることをもっと設計書に書いてもいい
-YaakoDriveはFile管理システムというよりNode管理システムといっていい可能性がある
-
-## Upload整合性
-後でチャンクアップロードを作るならUpload Sessionという概念がほぼ確実に出る。なのでtmpではなくupload_sessionという言葉を今から使ってもいいかもしれない
-
-## ストレージ抽象
-今はLocal Storageですが、設計書にStorage Serviceという言葉を少し書いておくと、将来
-```
-Local
-↓
-S3
-↓
-NAS
-```
-へ差し替えられるのではないか。
-
-## Dashboard
-MVPに使用容量があります。気になったのは毎回SUMするの？です。例えばSELECT SUM(size)でも十分ですが、将来数百万ファイルになると重いです。将来的にはUserStatisticsのような集計テーブルを導入する可能性があります。MVPでは不要ですが、設計思想としてDashboardは集計系という認識を持っておくと後で楽
-
-## Search
-検索は後から意外と大変になります。例えばILIKE '%abc%'なのかpg_trgmなのか全文検索なのか。MVPでは十分ですが、将来PostgreSQL Full Text Searchまで考えるならRepositoryを少し意識すると後で楽になる。
-最終的には部分一致のほかに、少しでも一致(打ち間違えなど)で、一致している順に出すのようなこともしたいと考えている。
-`例: 検索(errr) 検索結果(error)`
-
-
-
-
-
-
-
-
-
-
-## backend/Cargo.toml
-tokioがfullになっているので最終的には削ってもいいかもしれない。
-
-## Nodeクレート
-### 責務の考え
-Nodeに振る舞いが無い。
-今は`pub name: String`になっているが、Renameはユースケースがやりそうである。
-`node.rename(...)`に寄せてもいいのではないか。
-こうするとRename RuleがNodeへ閉じ込められるのではないか。
-同じように
-```rust
-delete()
-restore()
-move_to()
-```
-などもNode側へ持たせた方がいいのではないか。Name(String)というValue Objectにするのも良いかもしれない。
-
-
-### エラー型
-```rust
-impl TryFrom<&str> for NodeStatus {
-  type Error = String;
-  ...
-}
-```
-ここをStringではなくNodeErrorでもいいかもしれない
-
-### NodeError
-これは少し違和感があるかもしれない。例えばAlreadyDeletedがあります。でもNode自身にdelete()がありません。つまりエラーだけある。これはUseCaseにロジックがある可能性があります。私はNodeErrorはNodeのメソッドから返ってきてほしいかもしれない。
-
-
-## NodeRepository
-### 肥大化の初期衝動について
-DashboardQueryServiceやQueryServiceを分けて、別々に管理してもいいかもしれない。
-RepositoryがNodeRepositoryという名前なのにやっている仕事が
-```
-CRUD
-検索
-Dashboard
-Tree
-Trash
-Restore
-```
-のように全部になっている。つまりAggregate RepositoryではなくNodeに関する全DBアクセス窓口になっています。
-
-
-
-
-
-
-# 特に着手したいリファクタリング点
-- もう少しNodeのドメインロジックを育てる → やった
-- NodeRepositoryをDashboardQueryServiceやQueryServiceに分ける(UseCase中心になってると思います。そのため、Query系（Dashboard・Search・Trash一覧など）をRepositoryから切り出す処理はこの後リファクタリングしようと思う)
-- まだ通常ユーザを作成するユースケースなくね？
-
+# リファクタリング点(候補なだけで、実行するかは要検討)
 
 ## NodeRepositoryの分割
 NodeRepositoryをDashboardQueryServiceやQueryServiceに分ける(UseCase中心になってると思う。そのため、Query系（Dashboard・Search・Trash一覧など）をRepositoryから切り出す処理はこの後リファクタリングしようと思う)
@@ -136,13 +42,18 @@ AppError::Node(msg) => (StatusCode::CONFLICT, "node", msg),
 1. `restore_with_descendants()` で `deleted_at=NULL` をセット（全子孫）
 2. `update()` で `name` を更新（リネームした場合のみ）
 
-という2ステップになる。トランザクションで保護されていないため、1が成功して2が失敗した場合、名前変更なしで復元される状態になる。UnitOfWorkを使って原子的に行うか、`restore_with_descendants_and_rename` のような専用クエリを検討した方が良いか悩みどころである。。
+という2ステップになる。トランザクションで保護されていないため、1が成功して2が失敗した場合、名前変更なしで復元される状態になる。UnitOfWorkを使って原子的に行うか、`restore_with_descendants_and_rename` のような専用クエリを検討した方が良いか悩みどころである。
 
+## `DownloadTokenStore` に期限切れトークンのクリーンアップ機構がない
+現状は `consume` のときだけ期限チェックしますが、消費されなかった期限切れトークンがメモリに残り続ける。長期稼働サーバでは積み重なる。tokioのspawnを使った定期クリーンアップなどの方法で解決したい。
 
+## 通常のユーザを作る機構がない
+一旦CLIコマンドで作ってしまうか、APIを実装するかは悩みどころである。
+友人が使う時、その友人のパスワードは僕は知らない方がいいとは思う。
 
-
-
-
+## Cargo.tomlについて
+リファクタリングを進めた結果、必要じゃなくなった依存関係が生まれている気がするので、それを削除したい。
+また、tokioなどがが"full"になっていたりするので、そこを最適化してもいいかもしれない
 
 
 
