@@ -14,7 +14,7 @@ use uuid::Uuid;
 // 内部ライブラリ
 use app::usecase::trash::{
   hard_delete_node::{HardDeleteNodeInput, HardDeleteNodeUseCase},
-  list_trash::{ListTrashInput, ListTrashUseCase},
+  list_trash::{ListTrashChildrenInput, ListTrashInput, ListTrashUseCase},
   restore_node::{RestoreNodeInput, RestoreNodeUseCase},
 };
 use identity::NodeId;
@@ -56,28 +56,20 @@ pub async fn list_trash_children_handler(
   Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, ApiAppError> {
   let user_id = parse_user_id(&claims.sub)?;
+  let node_id = NodeId::from_uuid(id);
 
-  // 対象フォルダの存在と権限を確認する
-  let parent = state
-    .node_repo
-    .find_by_id(&NodeId::from_uuid(id))
+  // 子を取得
+  let usecase = ListTrashUseCase::new(state.node_repo.as_ref());
+  let nodes = usecase
+    .execute_children(ListTrashChildrenInput {
+      owner_user_id: user_id,
+      parent_id: node_id,
+    })
     .await
-    .map_err(|e| ApiAppError::from(app::AppError::from(e)))?
-    .ok_or_else(|| ApiAppError::from(app::AppError::NotFound("node not found".to_string())))?;
-
-  if parent.owner_user_id() != &user_id {
-    return Err(ApiAppError::from(app::AppError::NotFound(
-      "node not found".to_string(),
-    )));
-  }
-
-  let nodes = state
-    .node_repo
-    .list_deleted_children(&user_id, &NodeId::from_uuid(id))
-    .await
-    .map_err(|e| ApiAppError::from(app::AppError::from(e)))?;
+    .map_err(ApiAppError::from)?;
 
   let response: Vec<NodeResponse> = nodes.into_iter().map(NodeResponse::from).collect();
+
   Ok(Json(ApiResponse::ok(response)))
 }
 
