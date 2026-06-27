@@ -62,8 +62,11 @@ pub fn create_router(state: AppState) -> Router {
     .route("/api/search", get(search_handler))
     // dashboard
     .route("/api/dashboard", get(dashboard_handler))
-    // デフォルトだと2MBまでしか送信できないので、仮で制限をなくす
-    .layer(axum::extract::DefaultBodyLimit::disable())
+    // デフォルトだと2MBまでしか送信できないので
+    // 送信制限をconfigのmax_size_bytesにする
+    .layer(axum::extract::DefaultBodyLimit::max(
+      state.config.upload.max_size_bytes as usize,
+    ))
     // State管理
     .with_state(state)
 }

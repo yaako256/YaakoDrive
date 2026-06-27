@@ -121,7 +121,7 @@ impl PgRefreshTokenRepository {
       token.id().as_uuid(),
       token.user_id().as_uuid(),
       token.token_hash(),
-      *token.user_agent(),
+      token.user_agent(),
       token.expires_at(),
       token.created_at(),
     )

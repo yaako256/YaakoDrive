@@ -192,8 +192,8 @@ impl Node {
     &self.node_type
   }
   /// deleted_atのゲッター関数
-  pub fn deleted_at(&self) -> &Option<DateTime<Utc>> {
-    &self.deleted_at
+  pub fn deleted_at(&self) -> Option<&DateTime<Utc>> {
+    self.deleted_at.as_ref()
   }
   /// created_atのゲッター関数
   pub fn created_at(&self) -> &DateTime<Utc> {
@@ -372,7 +372,10 @@ impl FileContent {
     size_bytes: i64,
   ) -> NodeResult<Self> {
     // 名前の検証
-    validate_name(&stored_filename)?;
+    // → stored_filename は {UUID}.{ext} 形式のサーバ生成名なので、
+    // ユーザ入力のファイル名バリデーション関数を使うのは概念的に不適切
+    // → よってコメントアウト
+    //validate_name(&stored_filename)?;
 
     Ok(Self {
       node_id: node_id,

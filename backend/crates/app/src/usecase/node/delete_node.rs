@@ -43,7 +43,7 @@ impl<'a> DeleteNodeUseCase<'a> {
     node.soft_delete()?;
 
     // 絶対にdeleted_atが設定されてるはずなのでunwrap
-    let deleted_at = node.deleted_at().unwrap();
+    let deleted_at = *node.deleted_at().unwrap();
 
     // 論理削除(deleted_atの設定)をする
     // フォルダの場合は配下ノードすべてにdeleted_atを設定する

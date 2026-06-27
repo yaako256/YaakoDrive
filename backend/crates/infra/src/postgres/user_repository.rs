@@ -150,7 +150,7 @@ impl PgUserRepository {
       user.storage_limit_bytes(),
       user.created_at(),
       user.updated_at(),
-      *user.disabled_at(),
+      user.disabled_at(),
     )
     .execute(&self.pool)
     .await?;
@@ -184,7 +184,7 @@ impl PgUserRepository {
       user.role().as_str(),
       user.storage_limit_bytes(),
       user.updated_at(),
-      *user.disabled_at(),
+      user.disabled_at(),
     )
     .execute(&self.pool)
     .await?

@@ -15,6 +15,9 @@ use node::model::{FileContent, Node};
 // トレイト型
 use repository::{RepoError, RepoResult, TransactionContext, UnitOfWork};
 
+// 自クレート
+use crate::postgres::UNIQUE_VIOLATION;
+
 /// PostgreSQL トランザクションのコンテキスト。
 /// tx を所有したまま、各操作を直接 sqlx で実行する。
 pub struct PgTransactionContext {
@@ -46,7 +49,7 @@ impl TransactionContext for PgTransactionContext {
       node.name(),
       node.node_type().as_str(),
       node.status().as_str(),
-      *node.deleted_at(),
+      node.deleted_at(),
       node.created_at(),
       node.updated_at(),
     )
@@ -55,7 +58,7 @@ impl TransactionContext for PgTransactionContext {
     .map_err(|e| {
       // UNIQUE制約違反を Conflict に変換する
       if let sqlx::Error::Database(ref db_err) = e {
-        if db_err.code().as_deref() == Some("23505") {
+        if db_err.code().as_deref() == Some(UNIQUE_VIOLATION) {
           return RepoError::Conflict("name already exists".to_string());
         }
       }
@@ -83,7 +86,7 @@ impl TransactionContext for PgTransactionContext {
       node.parent_id().as_ref().map(|id| *id.as_uuid()),
       node.name(),
       node.status().as_str(),
-      *node.deleted_at(),
+      node.deleted_at(),
       node.updated_at(),
     )
     .execute(&mut *self.tx)

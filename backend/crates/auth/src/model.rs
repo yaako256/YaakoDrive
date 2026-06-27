@@ -95,7 +95,7 @@ impl User {
       username,
       password,
       Role::User,
-      10 * 1024 * 1024 * 1024, // 仮で10MB
+      10 * 1024 * 1024 * 1024, // 仮で10GB
     )
   }
 
@@ -105,7 +105,7 @@ impl User {
       username,
       password,
       Role::Admin,
-      20 * 1024 * 1024 * 1024, // 仮で20MB → いつかenv等にする
+      20 * 1024 * 1024 * 1024, // 仮で20GB → いつかenv等にする
     )
   }
 
@@ -138,11 +138,11 @@ impl User {
     &self.id
   }
   /// usernameのゲッター関数
-  pub fn username(&self) -> &String {
+  pub fn username(&self) -> &str {
     &self.username
   }
   /// password_hashのゲッター関数
-  pub fn password_hash(&self) -> &String {
+  pub fn password_hash(&self) -> &str {
     &self.password_hash
   }
   /// roleのゲッター関数
@@ -162,8 +162,8 @@ impl User {
     &self.updated_at
   }
   /// disabled_atのゲッター関数
-  pub fn disabled_at(&self) -> &Option<DateTime<Utc>> {
-    &self.disabled_at
+  pub fn disabled_at(&self) -> Option<&DateTime<Utc>> {
+    self.disabled_at.as_ref()
   }
 
   // ---- その他関数 ----
@@ -250,12 +250,12 @@ impl RefreshToken {
     &self.user_id
   }
   /// token_hashのゲッター関数
-  pub fn token_hash(&self) -> &String {
+  pub fn token_hash(&self) -> &str {
     &self.token_hash
   }
   /// user_agentのゲッター関数
-  pub fn user_agent(&self) -> &Option<String> {
-    &self.user_agent
+  pub fn user_agent(&self) -> Option<&String> {
+    self.user_agent.as_ref()
   }
   /// expires_atのゲッター関数
   pub fn expires_at(&self) -> &DateTime<Utc> {
@@ -266,8 +266,8 @@ impl RefreshToken {
     &self.created_at
   }
   /// revoked_atのゲッター関数
-  pub fn revoked_at(&self) -> &Option<DateTime<Utc>> {
-    &self.revoked_at
+  pub fn revoked_at(&self) -> Option<&DateTime<Utc>> {
+    self.revoked_at.as_ref()
   }
 
   // ---- その他関数 ----
