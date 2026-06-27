@@ -39,7 +39,21 @@ async fn extract_upload_field(
     .map_err(|e| ApiAppError::from(app::AppError::InvalidInput(e.to_string())))?
     .ok_or_else(|| ApiAppError::from(app::AppError::InvalidInput("no file field".to_string())))?;
 
-  let filename = field.file_name().unwrap_or("unknown").to_string();
+  let filename = field
+    .file_name()
+    .ok_or_else(|| {
+      ApiAppError::from(app::AppError::InvalidInput(
+        "filename is required".to_string(),
+      ))
+    })?
+    .to_string();
+
+  if filename.is_empty() {
+    return Err(ApiAppError::from(app::AppError::InvalidInput(
+      "filename cannot be empty".to_string(),
+    )));
+  }
+
   let data = field
     .bytes()
     .await
