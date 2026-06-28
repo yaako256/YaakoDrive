@@ -1,11 +1,15 @@
 import { defineConfig } from 'vite'
-import react, { reactCompilerPreset } from '@vitejs/plugin-react'
-import babel from '@rolldown/plugin-babel'
+import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    react(),
-    babel({ presets: [reactCompilerPreset()] })
-  ],
+  plugins: [react()],
+  server: {
+    proxy: {
+      // SameSite=Strict Cookie を壊さないためにプロキシ経由で /api を転送
+      '/api': {
+        target: 'http://yaakodrive_backend_dev:9090',
+        changeOrigin: true,
+      },
+    },
+  },
 })
