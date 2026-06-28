@@ -61,7 +61,7 @@ impl LocalStorageService {
       .and_then(|e| e.to_str())
       .unwrap_or("");
 
-    // 仮ファイル名を作成
+    // 一時ファイル名を作成
     // 拡張子がNoneの時は"."を2重にしない
     if ext.is_empty() {
       format!("{}.tmp", Uuid::new_v4())

@@ -1,8 +1,13 @@
 // ─── API レスポンス共通型 ────────────────────────────────────────────────────
 
+export interface ApiError {
+  code: string;
+  message: string;
+}
+
 export interface ApiResponse<T> {
   data: T | null;
-  error: { code: string; message: string } | null;
+  error: ApiError | null;
 }
 
 // ─── ノード ─────────────────────────────────────────────────────────────────

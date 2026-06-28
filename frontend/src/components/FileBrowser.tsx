@@ -50,7 +50,7 @@ export function FileBrowser({ onError, onSuccess }: Props) {
 
   useEffect(() => {
     reload();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentId]);
 
   // ─── フォルダを開く ──────────────────────────────────────────────────────
@@ -156,10 +156,10 @@ export function FileBrowser({ onError, onSuccess }: Props) {
   const handleDownload = async (node: NodeItem) => {
     try {
       const { url } = await api.getDownloadUrl(node.id);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = node.name;
-      a.click();
+
+      // ダウンロードURLをFull Urlにする
+      window.location.href = url;
+
     } catch (e) {
       onError(e instanceof ApiError ? e.message : String(e));
     }

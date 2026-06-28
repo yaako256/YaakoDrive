@@ -12,10 +12,10 @@ curl -s http://localhost:9090/api/health | jq
 # ログイン
 curl -s -c cookies.txt -X POST http://localhost:9090/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"yaako-admin","password":"yourpassword"}' | jq
+  -d '{"username":"yaakoadmin","password":"yourpassword"}' | jq
 
 # レスポンス例
-# { "data": { "username": "yaako-admin" }, "error": null }
+# { "data": { "username": "yaakoadmin" }, "error": null }
 
 # Refresh
 curl -s -b cookies.txt -c cookies.txt -X POST \
@@ -30,7 +30,7 @@ curl -s -b cookies.txt -X POST \
 ## Node関連作成時のチェックコマンド群
 ```bash
 # 2つ目のアカウントを作成
-make create-admin USERNAME=yaako-admin2
+make create-admin USERNAME=yaakoadmin2
 > yaakoadmin2
 
 # ユーザDB確認
@@ -39,12 +39,12 @@ make user
 # ログインしてCookieを取得(1ユーザ目)
 curl -s -c cookies_1.txt -X POST http://localhost:9090/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"yaako-admin","password":"yaakoadmin"}' | jq
+  -d '{"username":"yaakoadmin","password":"yaakoadmin"}' | jq
 
 # ログインしてCookieを取得(2ユーザ目)
 curl -s -c cookies_2.txt -X POST http://localhost:9090/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"yaako-admin2","password":"yaakoadmin2"}' | jq
+  -d '{"username":"yaakoadmin2","password":"yaakoadmin2"}' | jq
 
 
 # ルート直下にフォルダ作成
@@ -111,7 +111,7 @@ curl -s http://localhost:9090/api/health | jq
 # ログインしてCookieを取得(1ユーザ目)
 curl -s -c cookies_1.txt -X POST http://localhost:9090/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"yaako-admin","password":"yaakoadmin"}' | jq
+  -d '{"username":"yaakoadmin","password":"yaakoadmin"}' | jq
 
 # refresh
 curl -s -b cookies_1.txt -c cookies.txt -X POST \
@@ -183,7 +183,7 @@ curl -s http://localhost:9090/api/health | jq
 # ログインしてCookieを取得(1ユーザ目)
 curl -s -c cookies_1.txt -X POST http://localhost:9090/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"yaako-admin","password":"yaakoadmin"}' | jq
+  -d '{"username":"yaakoadmin","password":"yaakoadmin"}' | jq
 
 # refresh
 curl -s -b cookies_1.txt -c cookies.txt -X POST \
