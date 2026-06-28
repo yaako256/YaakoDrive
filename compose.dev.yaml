@@ -83,7 +83,7 @@ services:
       #- ./data/dev:/workspace/data/dev
 
     ports:
-      - "9090:9090"
+      - "127.0.0.1:9090:9090" # 127でホスト外からは見えない
 
     depends_on:
       db:

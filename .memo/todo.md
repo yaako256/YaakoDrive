@@ -212,6 +212,43 @@ PWAを頑張る
 tailscaleを使った接続をできるようにする。
 また、自宅LAN内なら接続ができるようにする。(最終的にそれを使うかは要検討)
 
+## 友人へのTailscaleでの共有について
+`NodeSharing`という方法がある。これは`tailnetに招待(無料枠の人数制限あり)`とは異なり、デバイス単位でtailscaleのIPアドレスを共有するものらしい。人数制限はない。
+NodeShareingでデバイス単位でtailscaleのIPアドレスを共有したうえで、Access consoleで共有するポートを絞る感じだと思われる。
+これをマイクラサーバなどでも使う。
+多分以下のようにACLで定義する(Claudeが出しただけで、正しいかはチェックしていない)
+```json
+{
+  "acls": [
+    // 自分（オーナー）は全てアクセス可
+    {
+      "action": "accept",
+      "src": ["autogroup:owner"],
+      "dst": ["*:*"]
+    },
+    // 共有ユーザー（友人）はfrontendのポートのみ
+    {
+      "action": "accept",
+      "src": ["autogroup:shared"],
+      "dst": ["tag:yaakodrive-server:3000"]
+    }
+  ],
+  "tagOwners": {
+    "tag:yaakodrive-server": ["autogroup:owner"]
+  }
+}
+```
+
+## 本番環境について
+viteだとホットリロードなどの不要な処理が動くなど、いろいろな観点からnginxを使った方がよさそうである。
+- viteがホットリロード
+- HTTS化が楽
+
+よって、その設定をあらかじめしておく。
+また、開始時に自動で色々走る(run-server)などの処理もDokerfileに入ってないと思うので、本番環境開始時のフローをちゃんとしなければならない。
+現在は開発環境側しかしっかりしていない。
+
+
 ## 認証
 Refresh Tokenの時間が短いのかわからないが、すぐ切れる。
 トークンのリフレッシュを使っていないから？
