@@ -87,6 +87,7 @@ RUN apt-get update && apt-get install -y \
 # Rustのrelease binaryだけをコピーする。
 COPY --from=builder /workspace/backend/target/release/server /app/yaakodrive-server
 COPY --from=builder /workspace/backend/target/release/cli /app/yaakodrive-cli
+COPY --from=builder /workspace/sql /app/sql
 
 # configはcompose側で /app/config にmountする想定。
 # 実ファイル保存先はcompose側で /data にmountする想定。

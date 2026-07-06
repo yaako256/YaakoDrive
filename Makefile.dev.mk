@@ -79,7 +79,7 @@ sqlx-prepare:
 ### Docker関連(Docker Management)
 # ==================================
 # ---- 開発用コンテナ ----
-.PHONY: env dev-up dev-stop dev-down dev-build dev-logs dev-ps
+.PHONY: env dev-up dev-stop dev-down dev-build dev-logs dev-ps prod-logs
 
 ## envファイル再読み込み用
 # 実態はただのup
@@ -146,6 +146,9 @@ deploy:
 prod-ps:
 	$(COMPOSE_PROD) ps
 
+## 本番コンテナのログ
+prod-logs:
+	$(COMPOSE_PROD) logs -f
 
 ## 完全本番デプロイ
 # - dev停止
