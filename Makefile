@@ -75,6 +75,45 @@ file-x:
 	$(COMPOSE_DEV) exec $(DATABASE_SERVICE_NAME) \
     psql -U yaakodrive -d yaakodrive_dev -x -c "SELECT * FROM file_contents;"
 
+
+
+# ==========================================
+### 本番環境
+# ==========================================
+.PHONY: prod-setup prod-migrate prod-create-admin
+
+## 本番環境の初回セットアップ（ディレクトリ作成）
+prod-setup:
+	sudo mkdir -p /srv/yaakodrive/postgres
+	sudo mkdir -p /srv/yaakodrive/data/files
+	sudo mkdir -p /srv/yaakodrive/data/tmp
+	@echo "本番用ディレクトリを作成しました"
+
+## 本番環境のmigration実行
+prod-migrate:
+	$(COMPOSE_PROD) exec $(BACKEND_SERVICE_NAME) \
+	  /app/yaakodrive-cli migrate --migrations-path /app/sql/migrations
+
+## 本番環境の管理者ユーザ作成
+# 使い方: make prod-create-admin USERNAME=yaako
+prod-create-admin:
+	$(COMPOSE_PROD) exec $(BACKEND_SERVICE_NAME) \
+	  /app/yaakodrive-cli create-admin --username $(USERNAME)
+
+# 本番起動の手順（初回）
+# make prod-setup        # ディレクトリ作成（初回のみ）
+# make prod-up           # コンテナ起動・ビルド
+# make prod-migrate      # migration実行（初回のみ）
+# make prod-create-admin USERNAME=yaako  # 管理者作成（初回のみ）
+
+# 2回目以降（アップデート時）
+# make deploy            # これだけ
+
+
+
+
+
+
 # ------------------------------------------
 # 開発用コマンドの読み込み
 # (ファイルがなければ無視する -include)

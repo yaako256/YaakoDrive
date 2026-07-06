@@ -2,12 +2,17 @@
 backend/crates/cli/src/main.rs
 CLIのエントリポイント
 */
+
+// 標準ライブラリ
+use std::path::Path;
+
+// 外部クレート
 use clap::{Parser, Subcommand};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+// 自クレート
 mod commands;
 mod error;
-
 use error::{CliError, CliResult};
 
 #[derive(Parser)]
@@ -26,6 +31,12 @@ enum Commands {
   },
   /// 期限切れRefresh Tokenを削除する
   CleanupExpiredTokens,
+  /// DBマイグレーションを実行する
+  Migrate {
+    /// migrationファイルのディレクトリパス
+    #[arg(long, default_value = "../../sql/migrations")]
+    migrations_path: String,
+  },
 }
 
 #[tokio::main]
@@ -60,6 +71,9 @@ async fn run() -> CliResult<()> {
     }
     Commands::CleanupExpiredTokens => {
       commands::cleanup_expired_tokens::run(pool).await?;
+    }
+    Commands::Migrate { migrations_path } => {
+      commands::migrate::run(pool, Path::new(&migrations_path)).await?;
     }
   }
 

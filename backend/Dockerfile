@@ -63,7 +63,11 @@ FROM chef AS builder
 COPY --from=planner /workspace/backend/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 
+# バックエンド全体のコピー
 COPY backend ./
+# migrationファイルのコピー
+COPY sql /workspace/sql
+
 RUN cargo build --release -p server \
     && cargo build --release -p cli
 
@@ -83,6 +87,7 @@ RUN apt-get update && apt-get install -y \
 # Rustのrelease binaryだけをコピーする。
 COPY --from=builder /workspace/backend/target/release/server /app/yaakodrive-server
 COPY --from=builder /workspace/backend/target/release/cli /app/yaakodrive-cli
+COPY --from=builder /workspace/sql /app/sql
 
 # configはcompose側で /app/config にmountする想定。
 # 実ファイル保存先はcompose側で /data にmountする想定。
