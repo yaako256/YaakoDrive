@@ -63,7 +63,11 @@ FROM chef AS builder
 COPY --from=planner /workspace/backend/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 
+# バックエンド全体のコピー
 COPY backend ./
+# migrationファイルのコピー
+COPY sql /workspace/sql
+
 RUN cargo build --release -p server \
     && cargo build --release -p cli
 
