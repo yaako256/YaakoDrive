@@ -4,7 +4,7 @@ backend/crates/api/src/handlers/auth.rs
 */
 
 // 外部クレート
-use axum::{Json, extract::State, response::IntoResponse};
+use axum::{Json, extract::State, http::HeaderMap, response::IntoResponse};
 use axum_extra::extract::CookieJar;
 use axum_extra::extract::cookie::{Cookie, SameSite};
 use serde::{Deserialize, Serialize};
@@ -44,18 +44,21 @@ pub struct LoginResponse {
 pub async fn login_handler(
   State(state): State<AppState>,
   jar: CookieJar,
+  headers: HeaderMap,
   Json(req): Json<LoginRequest>,
 ) -> Result<impl IntoResponse, ApiAppError> {
-  // Phase 7ではUser-Agentは省略
-  // 後でログインの一部に含める
-  let user_agent = None;
-
   // LoginUseCaseをインスタンス
   let usecase = LoginUseCase::new(
     state.user_repo.as_ref(),
     state.refresh_token_repo.as_ref(),
     state.jwt_service.as_ref(),
   );
+
+  // UserAgentの取得
+  let user_agent = headers
+    .get(axum::http::header::USER_AGENT)
+    .and_then(|v| v.to_str().ok())
+    .map(|s| s.to_string());
 
   // ログイン処理を実行
   let output = usecase
