@@ -7,6 +7,8 @@ import type {
 } from './types';
 
 // ─── fetch ラッパー ──────────────────────────────────────────────────────────
+// リフレッシュ中かどうかのフラグ（二重実行防止）
+let isRefreshing = false;
 
 async function apiFetch<T>(
   path: string,
@@ -20,6 +22,40 @@ async function apiFetch<T>(
     },
     ...options,
   });
+
+  // 401 かつリフレッシュエンドポイント自体でなければリフレッシュを試みる
+  if (res.status === 401 && !path.includes('/api/auth/') && !isRefreshing) {
+    isRefreshing = true;
+    try {
+      const refreshRes = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!refreshRes.ok) {
+        // リフレッシュも失敗 → ログイン画面へ飛ばす
+        window.location.href = '/';
+        throw new ApiError('unauthorized', 'セッションが切れました', 401);
+      }
+    } finally {
+      isRefreshing = false;
+    }
+
+    // リフレッシュ成功 → 元のリクエストを1回だけ再試行
+    const retryRes = await fetch(path, {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      ...options,
+    });
+    const retryJson: ApiResponse<T> = await retryRes.json();
+    if (retryJson.error) {
+      throw new ApiError(retryJson.error.code, retryJson.error.message, retryRes.status);
+    }
+    return retryJson.data as T;
+  }
+
 
   const json: ApiResponse<T> = await res.json();
 
