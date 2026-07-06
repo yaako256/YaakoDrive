@@ -49,10 +49,8 @@ impl IntoResponse for ApiAppError {
       AppError::InvalidInput(msg) => (StatusCode::UNPROCESSABLE_ENTITY, "invalid_request", msg),
       AppError::Repository(msg) => (StatusCode::INTERNAL_SERVER_ERROR, "internal_error", msg),
       AppError::Auth(msg) => (StatusCode::UNAUTHORIZED, "unauthorized", msg),
-
-      // 仮定義
-      AppError::Storage(msg) => (StatusCode::CONFLICT, "storage", msg),
-      AppError::Node(msg) => (StatusCode::CONFLICT, "node", msg),
+      AppError::Storage(msg) => (StatusCode::INTERNAL_SERVER_ERROR, "internal_error", msg),
+      AppError::Node(msg) => (StatusCode::INTERNAL_SERVER_ERROR, "internal_error", msg),
     };
 
     let body = Json(ApiResponse::<()>::err(code, &message));

@@ -61,20 +61,47 @@ impl From<repository::RepoError> for AppError {
 // AuthError → AppError
 impl From<auth::AuthError> for AppError {
   fn from(e: auth::AuthError) -> Self {
-    AppError::Auth(e.to_string())
+    match e {
+      auth::AuthError::InvalidCredentials
+      | auth::AuthError::TokenExpired
+      | auth::AuthError::InvalidToken => AppError::Auth(e.to_string()),
+      // ハッシュ処理失敗はクライアント起因ではないためサーバーエラー扱い
+      auth::AuthError::HashError(_) => AppError::Repository(e.to_string()),
+      // バリデーション系はクライアントの入力不備
+      auth::AuthError::InvalidRole(msg)
+      | auth::AuthError::InvalidUsername(msg)
+      | auth::AuthError::InvalidPassword(msg) => AppError::InvalidInput(msg),
+    }
   }
 }
 
 // StorageError → AppError
 impl From<storage::StorageError> for AppError {
   fn from(e: storage::StorageError) -> Self {
-    AppError::Storage(e.to_string())
+    match e {
+      // ファイル実体がディスク上にない＝サーバー側のデータ不整合として扱う
+      storage::StorageError::NotFound(msg) => AppError::Repository(msg),
+      storage::StorageError::Io(e) => AppError::Repository(e.to_string()),
+    }
   }
 }
 
 // NodeError → AppError
 impl From<node::NodeError> for AppError {
   fn from(e: node::NodeError) -> Self {
-    AppError::Node(e.to_string())
+    match e {
+      node::NodeError::InvalidName(msg) => AppError::InvalidInput(msg),
+      node::NodeError::CircularMove => {
+        AppError::InvalidInput("cannot move a folder into its own descendant".to_string())
+      }
+      node::NodeError::MoveConflict => {
+        AppError::AlreadyExists("same name already exists".to_string())
+      }
+      node::NodeError::NotFound => AppError::NotFound("node not found".to_string()),
+      node::NodeError::AlreadyActive
+      | node::NodeError::AlreadyDeleted
+      | node::NodeError::UnknownNodeType(_)
+      | node::NodeError::UnknownStatus(_) => AppError::Repository(e.to_string()),
+    }
   }
 }

@@ -15,9 +15,6 @@ pub enum StorageError {
 
   #[error("file not found: {0}")]
   NotFound(String),
-
-  #[error("storage error: {0}")]
-  Other(String),
 }
 
 /// Configクレートのリザルト
