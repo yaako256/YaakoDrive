@@ -75,6 +75,8 @@ pub async fn upload_handler(
 
   let usecase = UploadFileUseCase::new(
     state.node_repo.as_ref(),
+    state.file_content_repo.as_ref(),
+    state.user_repo.as_ref(),
     state.uow.as_ref(),
     state.storage.as_ref(),
     state.config.upload.max_size_bytes,
@@ -105,6 +107,8 @@ pub async fn upload_root_handler(
 
   let usecase = UploadFileUseCase::new(
     state.node_repo.as_ref(),
+    state.file_content_repo.as_ref(),
+    state.user_repo.as_ref(),
     state.uow.as_ref(),
     state.storage.as_ref(),
     state.config.upload.max_size_bytes,

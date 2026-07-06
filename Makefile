@@ -36,7 +36,9 @@ user-x:
 ## RefreshTokensのテーブル(一部)を表示
 token:
 	$(COMPOSE_DEV) exec $(DATABASE_SERVICE_NAME) \
-    psql -U yaakodrive -d yaakodrive_dev -c "SELECT id, user_id, expires_at, created_at, revoked_at FROM refresh_tokens;"
+			psql -U yaakodrive -d yaakodrive_dev -c "SELECT user_id,user_agent, created_at, revoked_at FROM refresh_tokens;"
+# 	$(COMPOSE_DEV) exec $(DATABASE_SERVICE_NAME) \
+#     psql -U yaakodrive -d yaakodrive_dev -c "SELECT id, user_id, expires_at, created_at, revoked_at FROM refresh_tokens;"
 
 
 ## RefreshTokensのテーブル(すべて)を縦に表示

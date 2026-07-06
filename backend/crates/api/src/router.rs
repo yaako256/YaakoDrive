@@ -13,7 +13,7 @@ use axum::{
 // 自クレート
 // ハンドラ達
 use crate::handlers::{
-  auth::{login_handler, logout_handler, refresh_handler},
+  auth::{login_handler, logout_handler, me_handler, refresh_handler},
   dashboard::dashboard_handler,
   file::{download_handler, download_url_handler, upload_handler, upload_root_handler},
   health::health_handler,
@@ -38,6 +38,7 @@ pub fn create_router(state: AppState) -> Router {
     .route("/api/auth/login", post(login_handler))
     .route("/api/auth/refresh", post(refresh_handler))
     .route("/api/auth/logout", post(logout_handler))
+    .route("/api/auth/me", get(me_handler))
     // nodeとfileで先に登録するやつら(※注意)
     .route("/api/nodes", get(list_root_handler))
     .route("/api/nodes/folders", post(create_root_folder_handler))

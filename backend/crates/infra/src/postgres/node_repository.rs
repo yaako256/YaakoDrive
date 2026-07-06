@@ -617,7 +617,14 @@ impl PgNodeRepository {
   ) -> InfraResult<Vec<Node>> {
     // ILIKE で大文字小文字を無視した部分一致検索。
     // 結果は最大 100 件に制限する。
-    let pattern = format!("%{}%", query);
+
+    // ワイルドカードをエスケープしつつ
+    // 検索文字列を取得
+    let escaped = query
+      .replace('\\', "\\\\")
+      .replace('%', "\\%")
+      .replace('_', "\\_");
+    let pattern = format!("%{}%", escaped);
 
     let rows = sqlx::query_as!(
       NodeRow,
@@ -637,7 +644,7 @@ impl PgNodeRepository {
         owner_user_id = $1
           AND deleted_at IS NULL
           AND status = 'active'
-          AND name ILIKE $2
+          AND name ILIKE $2 ESCAPE '\'
       ORDER BY node_type DESC, name ASC
       LIMIT 100
       "#,

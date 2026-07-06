@@ -10,7 +10,7 @@ use uuid::Uuid;
 // 内部ライブラリ
 use identity::{NodeId, UserId};
 use node::model::{FileContent, Node};
-use repository::{NodeRepository, UnitOfWork};
+use repository::{FileContentRepository, NodeRepository, UnitOfWork, UserRepository};
 use storage::service::{StorageService, TempFile};
 
 // 自クレート
@@ -31,6 +31,8 @@ pub struct UploadFileOutput {
 
 pub struct UploadFileUseCase<'a> {
   node_repo: &'a dyn NodeRepository,
+  file_content_repo: &'a dyn FileContentRepository,
+  user_repo: &'a dyn UserRepository,
   uow: &'a dyn UnitOfWork,
   storage: &'a dyn StorageService,
   max_size_bytes: u64,
@@ -39,12 +41,16 @@ pub struct UploadFileUseCase<'a> {
 impl<'a> UploadFileUseCase<'a> {
   pub fn new(
     node_repo: &'a dyn NodeRepository,
+    file_content_repo: &'a dyn FileContentRepository,
+    user_repo: &'a dyn UserRepository,
     uow: &'a dyn UnitOfWork,
     storage: &'a dyn StorageService,
     max_size_bytes: u64,
   ) -> Self {
     Self {
       node_repo,
+      file_content_repo,
+      user_repo,
       uow,
       storage,
       max_size_bytes,
@@ -59,7 +65,24 @@ impl<'a> UploadFileUseCase<'a> {
       data,
     } = input;
 
-    // サイズチェック（メモリ上で確認できるため先に行う）
+    // ユーザごとのストレージ上限チェック
+    // ユーザの統計情報取得
+    let usage = self
+      .file_content_repo
+      .get_usage_stats(&owner_user_id)
+      .await?;
+    // id からユーザ型を取得
+    let user = self
+      .user_repo
+      .find_by_id(&owner_user_id)
+      .await?
+      .ok_or_else(|| AppError::NotFound("user not found".to_string()))?;
+    // ストレージ上限チェック
+    if usage.total_bytes + data.len() as i64 > *user.storage_limit_bytes() {
+      return Err(AppError::StorageLimitExceeded);
+    }
+
+    // アップロード上限サイズチェック（メモリ上で確認できるため先に行う）
     if data.len() as u64 > self.max_size_bytes {
       return Err(AppError::StorageLimitExceeded);
     }

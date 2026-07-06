@@ -44,6 +44,11 @@ impl<'a> RenameNodeUseCase<'a> {
       return Err(AppError::NotFound("node not found".to_string()));
     }
 
+    // 削除済みNodeはリネームできない ← 追加
+    if node.is_deleted() {
+      return Err(AppError::AlreadyDeleted);
+    }
+
     // 名前を更新
     node.rename(input.new_name)?;
 
