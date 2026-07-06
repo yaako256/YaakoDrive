@@ -13,6 +13,7 @@ use tracing::info;
 
 // 内部ライブラリ
 use app::usecase::auth::{
+  get_me::{GetMeInput, GetMeUseCase},
   login::{LoginInput, LoginUseCase},
   logout::{LogoutInput, LogoutUseCase},
   refresh::{RefreshInput, RefreshUseCase},
@@ -22,6 +23,8 @@ use app::usecase::auth::{
 use crate::{
   cookie::{ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE},
   error::ApiAppError,
+  extractor::AuthenticatedUser,
+  handlers::common::parse_user_id,
   response::ApiResponse,
   state::AppState,
 };
@@ -191,4 +194,27 @@ pub async fn logout_handler(
   let jar = jar.add(remove_access).add(remove_refresh);
 
   Ok((jar, Json(ApiResponse::ok(()))))
+}
+
+// ─── Me ──────────────────────────────────────────────────
+#[derive(Serialize)]
+pub struct MeResponse {
+  pub username: String,
+}
+
+pub async fn me_handler(
+  State(state): State<AppState>,
+  AuthenticatedUser(claims): AuthenticatedUser,
+) -> Result<impl IntoResponse, ApiAppError> {
+  let user_id = parse_user_id(&claims.sub)?;
+
+  let usecase = GetMeUseCase::new(state.user_repo.as_ref());
+  let output = usecase
+    .execute(GetMeInput { user_id })
+    .await
+    .map_err(ApiAppError::from)?;
+
+  Ok(Json(ApiResponse::ok(MeResponse {
+    username: output.username,
+  })))
 }

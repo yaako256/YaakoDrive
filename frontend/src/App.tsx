@@ -12,12 +12,17 @@ import { ApiError } from './api';
 type Tab = 'files' | 'trash' | 'search' | 'dashboard';
 
 export default function App() {
-  const { username, login, logout } = useAuth();
+  const { username, login, logout, checking } = useAuth();
   const { toasts, push, dismiss } = useToast();
   const [tab, setTab] = useState<Tab>('files');
 
   const onError = (msg: string) => push('error', msg);
   const onSuccess = (msg: string) => push('success', msg);
+
+  // セッション確認中はローディング表示
+  if (checking) {
+    return <div style={{ padding: 40, color: '#7c82a8' }}>読み込み中…</div>;
+  }
 
   const handleLogout = async () => {
     try {
@@ -38,9 +43,9 @@ export default function App() {
   }
 
   const navItems: { id: Tab; label: string; icon: string }[] = [
-    { id: 'files',     label: 'マイドライブ', icon: '🗂' },
-    { id: 'search',    label: '検索',          icon: '🔍' },
-    { id: 'trash',     label: 'ゴミ箱',        icon: '🗑' },
+    { id: 'files', label: 'マイドライブ', icon: '🗂' },
+    { id: 'search', label: '検索', icon: '🔍' },
+    { id: 'trash', label: 'ゴミ箱', icon: '🗑' },
     { id: 'dashboard', label: 'ダッシュボード', icon: '📊' },
   ];
 
@@ -79,9 +84,9 @@ export default function App() {
       {/* メインエリア */}
       <main className="main-area">
         <div className="main-content">
-          {tab === 'files'     && <FileBrowser   onError={onError} onSuccess={onSuccess} />}
-          {tab === 'trash'     && <TrashPanel    onError={onError} onSuccess={onSuccess} />}
-          {tab === 'search'    && <SearchPanel   onError={onError} onSuccess={onSuccess} />}
+          {tab === 'files' && <FileBrowser onError={onError} onSuccess={onSuccess} />}
+          {tab === 'trash' && <TrashPanel onError={onError} onSuccess={onSuccess} />}
+          {tab === 'search' && <SearchPanel onError={onError} onSuccess={onSuccess} />}
           {tab === 'dashboard' && <DashboardPanel />}
         </div>
       </main>

@@ -91,6 +91,10 @@ export const logout = () =>
 export const refresh = () =>
   apiFetch<null>('/api/auth/refresh', { method: 'POST' });
 
+// 既に認証済みか
+export const getMe = () =>
+  apiFetch<LoginResponse>('/api/auth/me');
+
 // ─── ノード ─────────────────────────────────────────────────────────────────
 
 export const listRoot = () =>
