@@ -173,11 +173,15 @@ pub async fn logout_handler(
   // AccessToken削除
   let remove_access = Cookie::build((ACCESS_TOKEN_COOKIE, ""))
     .http_only(true)
+    .secure(state.config.cookie.secure)
+    .same_site(SameSite::Strict)
     .path("/api")
     .max_age(time::Duration::ZERO)
     .build();
   // RefreshToken削除
   let remove_refresh = Cookie::build((REFRESH_TOKEN_COOKIE, ""))
+    .secure(state.config.cookie.secure)
+    .same_site(SameSite::Strict)
     .http_only(true)
     .path("/api/auth")
     .max_age(time::Duration::ZERO)
