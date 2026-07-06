@@ -48,7 +48,8 @@ impl<'a> GetDownloadUrlUseCase<'a> {
       return Err(AppError::NotFound("node not found".to_string()));
     }
     if node.is_deleted() {
-      return Err(AppError::NotFound("node not found".to_string()));
+      // NotFound → AlreadyDeleted に変更
+      return Err(AppError::AlreadyDeleted);
     }
     if !node.is_file() {
       return Err(AppError::InvalidInput("node is not a file".to_string()));

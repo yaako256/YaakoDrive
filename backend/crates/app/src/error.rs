@@ -37,6 +37,9 @@ pub enum AppError {
   #[error("node error: {0}")]
   Node(String),
 
+  #[error("already deleted")]
+  AlreadyDeleted,
+
   #[error("storage limit exceeded")]
   StorageLimitExceeded,
 }

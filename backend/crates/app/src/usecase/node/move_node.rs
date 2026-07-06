@@ -46,6 +46,11 @@ impl<'a> MoveNodeUseCase<'a> {
       return Err(AppError::NotFound("node not found".to_string()));
     }
 
+    // 削除済みNodeは移動できない
+    if node.is_deleted() {
+      return Err(AppError::AlreadyDeleted);
+    }
+
     // 移動先の確認
     if let Some(ref new_parent_id) = input.new_parent_id {
       // 自分自身への移動は禁止
