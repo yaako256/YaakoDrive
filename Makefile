@@ -1,178 +1,38 @@
-# makefile
+# Makefile
+# ============================================================
+# YaakoDrive Makefile
+# ============================================================
+# makeコマンドのエントリポイント
+#
+# 実際のターゲットは次に定義
+#   make/common.mk
+#   make/help.mk
+#   make/docker.mk
+#   make/cli.mk
+#   make/database.mk
+#   make/utility.mk
+#   make/dev.mk
+#   make/prod.mk
+#
+# 一覧表示
+#   make help
+#		make ENV=prod help
+#
+# 次のように環境設定できる
+# 	ENV=dev (default)
+# 	ENV=prod
+# ============================================================
 
-# ==================================
-# 設定・変数定義のロード
-# ==================================
--include Makefile.common.mk
+# 共通変数・共通マクロ・環境固有コマンドのロード
+include make/common.mk
 
-# ==========================================
-### メイン / CLI処理用の設定
-# ==========================================
-.PHONY: create-admin
-
-## 管理者ユーザ作成
-# 使い方: make create-admin USERNAME=yaako
-create-admin:
-	$(COMPOSE_DEV) exec $(BACKEND_SERVICE_NAME) \
-		cargo run -p cli -- create-admin --username $(USERNAME)
-
-# ==========================================
-### メイン / 開発用DB確認
-# ==========================================
-.PHONY: user user-x
-## ユーザのテーブル(一部)を表示
-user:
-	$(COMPOSE_DEV) exec $(DATABASE_SERVICE_NAME) \
-    psql -U yaakodrive -d yaakodrive_dev -c "SELECT id, username, role, password_hash FROM users;"
-
-## ユーザのテーブル(すべて)を縦に表示
-user-x:
-	$(COMPOSE_DEV) exec $(DATABASE_SERVICE_NAME) \
-    psql -U yaakodrive -d yaakodrive_dev -x -c "SELECT * FROM users;"
-
-
-.PHONY: token token-x
-
-## RefreshTokensのテーブル(一部)を表示
-token:
-	$(COMPOSE_DEV) exec $(DATABASE_SERVICE_NAME) \
-			psql -U yaakodrive -d yaakodrive_dev -c "SELECT user_id,user_agent, created_at, revoked_at FROM refresh_tokens;"
-# 	$(COMPOSE_DEV) exec $(DATABASE_SERVICE_NAME) \
-#     psql -U yaakodrive -d yaakodrive_dev -c "SELECT id, user_id, expires_at, created_at, revoked_at FROM refresh_tokens;"
-
-
-## RefreshTokensのテーブル(すべて)を縦に表示
-token-x:
-	$(COMPOSE_DEV) exec $(DATABASE_SERVICE_NAME) \
-    psql -U yaakodrive -d yaakodrive_dev -x -c "SELECT * FROM refresh_tokens;"
-
-
-.PHONY: node node-x
-
-## Nodeのテーブル(一部)を表示
-node:
-#	$(COMPOSE_DEV) exec $(DATABASE_SERVICE_NAME) \
-    psql -U yaakodrive -d yaakodrive_dev -c "SELECT id, owner_user_id, parent_id, name, node_type, created_at, updated_at, deleted_at FROM nodes;"
-	$(COMPOSE_DEV) exec $(DATABASE_SERVICE_NAME) \
-    psql -U yaakodrive -d yaakodrive_dev -c "SELECT id, owner_user_id, parent_id, name, node_type, updated_at, deleted_at FROM nodes;"
-
-
-## Nodeのテーブル(すべて)を縦に表示
-node-x:
-	$(COMPOSE_DEV) exec $(DATABASE_SERVICE_NAME) \
-    psql -U yaakodrive -d yaakodrive_dev -x -c "SELECT * FROM nodes;"
-
-
-.PHONY: file file-x
-
-## file_contentsのテーブル(一部)を表示
-file:
-	$(COMPOSE_DEV) exec $(DATABASE_SERVICE_NAME) \
-    psql -U yaakodrive -d yaakodrive_dev -c "SELECT node_id, stored_filename, mime_type, size_bytes, status FROM file_contents;"
-
-## file_contentsのテーブル(すべて)を縦に表示
-file-x:
-	$(COMPOSE_DEV) exec $(DATABASE_SERVICE_NAME) \
-    psql -U yaakodrive -d yaakodrive_dev -x -c "SELECT * FROM file_contents;"
-
-
-
-# ==========================================
-### 本番環境
-# ==========================================
-.PHONY: prod-setup prod-migrate prod-create-admin
-
-## 本番環境の初回セットアップ（ディレクトリ作成）
-prod-setup:
-	sudo mkdir -p /srv/yaakodrive/postgres
-	sudo mkdir -p /srv/yaakodrive/data/files
-	sudo mkdir -p /srv/yaakodrive/data/tmp
-	@echo "本番用ディレクトリを作成しました"
-
-## 本番環境のmigration実行
-prod-migrate:
-	$(COMPOSE_PROD) exec $(BACKEND_SERVICE_NAME) \
-	  /app/yaakodrive-cli migrate --migrations-path /app/sql/migrations
-
-## 本番環境の管理者ユーザ作成
-# 使い方: make prod-create-admin USERNAME=yaako
-prod-create-admin:
-	$(COMPOSE_PROD) exec $(BACKEND_SERVICE_NAME) \
-	  /app/yaakodrive-cli create-admin --username $(USERNAME)
-
-# 本番起動の手順（初回）
-# make prod-setup        # ディレクトリ作成（初回のみ）
-# make prod-up           # コンテナ起動・ビルド
-# make prod-migrate      # migration実行（初回のみ）
-# make prod-create-admin USERNAME=yaako  # 管理者作成（初回のみ）
-
-# 2回目以降（アップデート時）
-# make deploy            # これだけ
-
-
-
-# ==========================================
-### メイン / 本番用DB確認
-# ==========================================
-.PHONY: prod-user prod-user-x
-## ユーザのテーブル(一部)を表示
-prod-user:
-	$(COMPOSE_PROD) exec $(DATABASE_SERVICE_NAME) \
-    psql -U yaakodrive -d yaakodrive_prod -c "SELECT id, username, role, password_hash FROM users;"
-
-## ユーザのテーブル(すべて)を縦に表示
-prod-user-x:
-	$(COMPOSE_PROD) exec $(DATABASE_SERVICE_NAME) \
-    psql -U yaakodrive -d yaakodrive_prod -x -c "SELECT * FROM users;"
-
-
-.PHONY: prod-token prod-token-x
-
-## RefreshTokensのテーブル(一部)を表示
-prod-token:
-	$(COMPOSE_PROD) exec $(DATABASE_SERVICE_NAME) \
-			psql -U yaakodrive -d yaakodrive_prod -c "SELECT user_id,user_agent, created_at, revoked_at FROM refresh_tokens;"
-# 	$(COMPOSE_DEV) exec $(DATABASE_SERVICE_NAME) \
-#     psql -U yaakodrive -d yaakodrive_prod -c "SELECT id, user_id, expires_at, created_at, revoked_at FROM refresh_tokens;"
-
-
-## RefreshTokensのテーブル(すべて)を縦に表示
-prod-token-x:
-	$(COMPOSE_PROD) exec $(DATABASE_SERVICE_NAME) \
-    psql -U yaakodrive -d yaakodrive_prod -x -c "SELECT * FROM refresh_tokens;"
-
-
-.PHONY: prod-node prod-node-x
-
-## Nodeのテーブル(一部)を表示
-prod-node:
-#	$(COMPOSE_PROD) exec $(DATABASE_SERVICE_NAME) \
-    psql -U yaakodrive -d yaakodrive_prod -c "SELECT id, owner_user_id, parent_id, name, node_type, created_at, updated_at, deleted_at FROM nodes;"
-	$(COMPOSE_PROD) exec $(DATABASE_SERVICE_NAME) \
-    psql -U yaakodrive -d yaakodrive_prod -c "SELECT id, owner_user_id, parent_id, name, node_type, updated_at, deleted_at FROM nodes;"
-
-
-## Nodeのテーブル(すべて)を縦に表示
-prod-node-x:
-	$(COMPOSE_PROD) exec $(DATABASE_SERVICE_NAME) \
-    psql -U yaakodrive -d yaakodrive_prod -x -c "SELECT * FROM nodes;"
-
-
-.PHONY: prod-file prod-file-x
-
-## file_contentsのテーブル(一部)を表示
-prod-file:
-	$(COMPOSE_PROD) exec $(DATABASE_SERVICE_NAME) \
-    psql -U yaakodrive -d yaakodrive_prod -c "SELECT node_id, stored_filename, mime_type, size_bytes, status FROM file_contents;"
-
-## file_contentsのテーブル(すべて)を縦に表示
-prod-file-x:
-	$(COMPOSE_PROD) exec $(DATABASE_SERVICE_NAME) \
-    psql -U yaakodrive -d yaakodrive_prod -x -c "SELECT * FROM file_contents;"
-
-
-# ------------------------------------------
-# 開発用コマンドの読み込み
-# (ファイルがなければ無視する -include)
-# ------------------------------------------
--include Makefile.dev.mk
+# docker
+include make/docker.mk
+# アプリのcli
+include make/cli.mk
+# database
+include make/database.mk
+# util
+include make/utility.mk
+# ヘルプコマンド
+include make/help.mk
