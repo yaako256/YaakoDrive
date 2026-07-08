@@ -11,7 +11,7 @@ MIGRATIONS_PATH := /workspace/sql/migrations
 # ==================================================
 ### 環境固有コマンド(dev)
 # ==================================================
-.PHONY: run-server check test dev-reset
+.PHONY: run-server check test dev-reset npm-install
 
 ## サーバ起動（開発用）
 run-server:
@@ -35,6 +35,10 @@ dev-reset:
 	$(COMPOSE) up -d --build
 	$(MAKE) migrate
 
+## 完全リセット後の必須処理(npm install)
+# これを実行したのち、make upする
+npm-install:
+	$(COMPOSE) run --rm $(FRONTEND_SERVICE_NAME) npm install
 
 
 

@@ -9,7 +9,7 @@
 # 実行例:
 # make cli ARGS="migrate"
 # make cli ARGS="create-admin --username yaako"
-# make clo ENV=prod ARGS="create-admin --username yaako"
+# make cli ENV=prod ARGS="create-admin --username yaako"
 cli:
 	$(BACKEND_EXEC) $(CLI) $(ARGS)
 
@@ -27,7 +27,7 @@ cli:
 #
 # make create-admin USERNAME=yaako ENV=prod
 #
-create-admin:
-	$(MAKE) cli \
-		ENV=$(ENV) \
-		ARGS="create-admin --username $(USERNAME)"
+# create-admin:
+# 	$(MAKE) cli \
+# 		ENV=$(ENV) \
+# 		ARGS="create-admin --username $(USERNAME)"

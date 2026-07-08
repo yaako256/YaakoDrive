@@ -4,13 +4,8 @@
 .env.*
 !.env*.example
 
-# 記録用フォルダ除外(data/dev/*とdata/prod/*)
-data/*/*
-
-# マウントの設定のせいでここに作られちゃった
-# マウントのせいというか、パス指定をしていないせい
-# backend/data/files/の中に、アップロード後のファイルがある
-backend/data/*/*
+# 開発用の物理ファイル保管場所
+dev-data
 
 # 自分用フォルダ除外
 *detailed_development_guide

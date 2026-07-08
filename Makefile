@@ -36,3 +36,45 @@ include make/database.mk
 include make/utility.mk
 # ヘルプコマンド
 include make/help.mk
+
+
+# ==================================================
+# Makefileメモ
+# ==================================================
+# このようにするとコマンドを見れる
+# 	make -n up
+#
+#
+# ==================================================
+# CLI実行例
+# ==================================================
+# 実行例:
+#
+# 管理者ユーザ作成
+#		make cli ARGS="create-admin --username yaako"
+# 	make cli ENV=prod ARGS="create-admin --username yaako"
+#
+# migrationの実行
+# (実際はパス設定を異ならせてる関係で固有makeがあるが一応)
+#		make cli ARGS="create-admin --username yaako"
+# 	make cli ENV=prod ARGS="create-admin --username yaako"
+#
+#		make migrate
+#		make migrate ENV=prod
+#
+#
+# ==================================================
+# 初回デプロイ手順
+# ==================================================
+#
+# make setup ENV=prod
+# make up ENV=prod
+# make migrate ENV=prod
+# make create-admin USERNAME=yaako ENV=prod
+#
+# ==================================================
+# 更新時
+# ==================================================
+#
+# make deploy ENV=prod
+#

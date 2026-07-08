@@ -72,6 +72,9 @@ services:
       # リポジトリ全体を見られるようにする。
       - .:/workspace
 
+      # 開発用の物理ファイル保存場所
+      - ./dev-data:/data
+
       # 設定ファイルをvolumeにマウント(読み取り専用)
       - ./.config/config.default.toml:/workspace/.config/config.default.toml:ro
       - ./.config/config.dev.toml:/workspace/.config/config.dev.toml:ro

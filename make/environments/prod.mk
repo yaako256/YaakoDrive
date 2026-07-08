@@ -33,20 +33,3 @@ setup:
 # make deploy ENV=prod
 deploy:
 	$(COMPOSE) up -d --build --force-recreate
-
-
-# ==================================================
-# 初回デプロイ手順
-# ==================================================
-#
-# make setup ENV=prod
-# make up ENV=prod
-# make migrate ENV=prod
-# make create-admin USERNAME=yaako ENV=prod
-#
-# ==================================================
-# 更新時
-# ==================================================
-#
-# make deploy ENV=prod
-#
