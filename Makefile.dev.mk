@@ -129,7 +129,7 @@ backend-test:
 	$(COMPOSE_DEV) exec $(BACKEND_SERVICE_NAME) cargo test
 
 # ---- 本番用コンテナ ----
-.PHONY: prod-up prod-down deploy prod-ps prod-backend-shell
+.PHONY: prod-up prod-down deploy prod-ps prod-backend-shell dev-migrate
 ## 本番用コンテナ起動
 prod-up:
 	$(COMPOSE_PROD) up -d --build
@@ -158,6 +158,17 @@ prod-logs:
 #	$(COMPOSE_DEV) down
 #	$(COMPOSE_DEV) rm
 #	$(COMPOSE_PROD) up -d --build --force-recreate
+
+## 開発環境のmigration実行
+dev-migrate:
+	$(COMPOSE_DEV) exec $(BACKEND_SERVICE_NAME) cargo run -p cli -- migrate  --migrations-path ../sql/migrations
+
+## 開発環境のリセット(SQLテーブル含む)
+dev-reset:
+	$(COMPOSE_DEV) down -v
+	$(COMPOSE_DEV) up --build
+	$(COMPOSE_DEV) exec $(BACKEND_SERVICE_NAME) cargo run -p cli -- migrate  --migrations-path ../sql/migrations
+	
 
 
 ## 本番用コンテナのバックエンドに入る
