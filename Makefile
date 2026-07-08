@@ -111,7 +111,64 @@ prod-create-admin:
 
 
 
+# ==========================================
+### メイン / 本番用DB確認
+# ==========================================
+.PHONY: prod-user prod-user-x
+## ユーザのテーブル(一部)を表示
+prod-user:
+	$(COMPOSE_PROD) exec $(DATABASE_SERVICE_NAME) \
+    psql -U yaakodrive -d yaakodrive_prod -c "SELECT id, username, role, password_hash FROM users;"
 
+## ユーザのテーブル(すべて)を縦に表示
+prod-user-x:
+	$(COMPOSE_PROD) exec $(DATABASE_SERVICE_NAME) \
+    psql -U yaakodrive -d yaakodrive_prod -x -c "SELECT * FROM users;"
+
+
+.PHONY: prod-token prod-token-x
+
+## RefreshTokensのテーブル(一部)を表示
+prod-token:
+	$(COMPOSE_PROD) exec $(DATABASE_SERVICE_NAME) \
+			psql -U yaakodrive -d yaakodrive_prod -c "SELECT user_id,user_agent, created_at, revoked_at FROM refresh_tokens;"
+# 	$(COMPOSE_DEV) exec $(DATABASE_SERVICE_NAME) \
+#     psql -U yaakodrive -d yaakodrive_prod -c "SELECT id, user_id, expires_at, created_at, revoked_at FROM refresh_tokens;"
+
+
+## RefreshTokensのテーブル(すべて)を縦に表示
+prod-token-x:
+	$(COMPOSE_PROD) exec $(DATABASE_SERVICE_NAME) \
+    psql -U yaakodrive -d yaakodrive_prod -x -c "SELECT * FROM refresh_tokens;"
+
+
+.PHONY: prod-node prod-node-x
+
+## Nodeのテーブル(一部)を表示
+prod-node:
+#	$(COMPOSE_PROD) exec $(DATABASE_SERVICE_NAME) \
+    psql -U yaakodrive -d yaakodrive_prod -c "SELECT id, owner_user_id, parent_id, name, node_type, created_at, updated_at, deleted_at FROM nodes;"
+	$(COMPOSE_PROD) exec $(DATABASE_SERVICE_NAME) \
+    psql -U yaakodrive -d yaakodrive_prod -c "SELECT id, owner_user_id, parent_id, name, node_type, updated_at, deleted_at FROM nodes;"
+
+
+## Nodeのテーブル(すべて)を縦に表示
+prod-node-x:
+	$(COMPOSE_PROD) exec $(DATABASE_SERVICE_NAME) \
+    psql -U yaakodrive -d yaakodrive_prod -x -c "SELECT * FROM nodes;"
+
+
+.PHONY: prod-file prod-file-x
+
+## file_contentsのテーブル(一部)を表示
+prod-file:
+	$(COMPOSE_PROD) exec $(DATABASE_SERVICE_NAME) \
+    psql -U yaakodrive -d yaakodrive_prod -c "SELECT node_id, stored_filename, mime_type, size_bytes, status FROM file_contents;"
+
+## file_contentsのテーブル(すべて)を縦に表示
+prod-file-x:
+	$(COMPOSE_PROD) exec $(DATABASE_SERVICE_NAME) \
+    psql -U yaakodrive -d yaakodrive_prod -x -c "SELECT * FROM file_contents;"
 
 
 # ------------------------------------------

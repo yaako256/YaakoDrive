@@ -129,7 +129,7 @@ backend-test:
 	$(COMPOSE_DEV) exec $(BACKEND_SERVICE_NAME) cargo test
 
 # ---- 本番用コンテナ ----
-.PHONY: prod-up prod-down deploy prod-ps
+.PHONY: prod-up prod-down deploy prod-ps prod-backend-shell
 ## 本番用コンテナ起動
 prod-up:
 	$(COMPOSE_PROD) up -d --build
@@ -159,6 +159,10 @@ prod-logs:
 #	$(COMPOSE_DEV) rm
 #	$(COMPOSE_PROD) up -d --build --force-recreate
 
+
+## 本番用コンテナのバックエンドに入る
+prod-backend-shell:
+	$(COMPOSE_PROD) exec $(BACKEND_SERVICE_NAME) sh
 
 # ==================================
 ### その他 (Utilities)
